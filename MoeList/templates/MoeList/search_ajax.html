@@ -1,0 +1,7 @@
+{% load static %}
+{% for anilist_id, anime in animes.items %}
+<div class="search-result-indi blueish-glass text-white border-white" style="background-image: url('{% static 'MoeList/banner/'|add:anime.slug|add:'.jpg' %}'), url('{% static 'MoeList/images/'|add:anime.slug|add:'.jpg' %}')">
+	<a class="card-title" href="{% url 'MoeList:anime' anilist_id %}">{{ anime.title }}</a>
+	<span>{{ anime.type }}, {{ anime.episodes }} Ep, {{ anime.season|title}} {{ anime.year }}</span>
+</div>
+{% endfor %}

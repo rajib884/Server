@@ -1,0 +1,17 @@
+
+.idea/
+venv/
+__pycache__/
+geckodriver.log
+/MoeList/static/MoeList/banner/
+/MoeList/static/MoeList/images/
+/MoeList/static/MoeList/thumbnails/
+/MoeList/Backbone/chrome_data/
+/MoeList/data_for_human/
+/MoeList/static/MoeList/banner/
+/MoeList/static/MoeList/images/
+/MoeList/static/MoeList/thumbnails/
+/MoeList/data_for_human/
+MoeList/data/AnimeList Data - Copy.enc
+MoeList/data/AnimeList Data.enc
+MoeList/data/download_links.json

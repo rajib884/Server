@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include "MoeList/header.html" %}
+		<style id="toChange">*{}</style>
+		<style>
+			.card-block {
+				padding-left: 10px;
+				min-height: 100px;
+			}
+			.col-auto {
+				width:100px; 
+				background-size: cover; 
+				background-position: center;
+			}
+			.items {
+				margin-bottom:20px;
+				background-color:#0028ff36;
+				transition: height 0.2s;
+				overflow:hidden;
+			}
+			.zero-height {
+				height:0!important;
+			}
+			.year-devider {
+				background-color: #ff000000;
+				width: 100%;
+				margin: 8px auto 2px!important;
+				padding: 0px 0px 4px 10px;
+				background-image: linear-gradient(to right, #151560 , #22222200);
+				font-size: 25px;
+				border-radius: .5rem;
+				border-width: 0px;
+				border-bottom: 5px solid;
+				border-image-slice: 1;
+				border-image-source: linear-gradient(to right, #ffffff, #ff000000);
+				display:flex;
+				justify-content:space-between;
+			}
+			.custom-color {
+				background-color:#1565c066;
+			}
+		</style>
+	</head>
+    <body style="padding-top: 55px;">
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>{% if banner %}
+		<div class="anime-cover" style="background-image: url('{% static banner %}');">
+			<img src="{% static banner %}" alt="cover" class="cover-helper">
+		</div>{% endif %}{% if anime_list %}
+        <div class="container-fluid">
+			<div class="year-devider text-white"><span class=" is-lighting">Airing</span><span class="toggler"><i class="fas fa-minus-square"></i></span></div>
+			<div class="items">{% for anime in anime_list %}{% if anime.airing %}
+                <div class="card blueish-glass text-white border-white">
+					<div class="row no-gutters">
+						<div class="col-auto" style="background-image:url('{% static anime.cover_small %}');"></div>
+						<div class="col">
+							<div class="card-block">
+								<a class="card-title name" href="{% url 'MoeList:anime' anime.id %}">{{ anime.name }}</a>{% if anime.airing %}
+								<span class="badge badge-success">Airing</span>{% endif %}{% if anime.deleted %}
+								<span class="badge badge-success">Deleted</span>{% endif %}
+								<br>
+								<div class="episodes">
+									<div class="spinner-border text-light spinner" anilist_id={{anime.id}} style="display:none; margin: 0px 11px -5px 11px;"></div>
+									{{anime.episodes}}
+								</div>
+							</div>
+						</div>
+					</div>
+                </div>{% endif %}{% endfor %}
+			</div>
+			{% for year_c in years %}
+			<div class="year-devider text-white"><span class=" is-lighting">{{ year_c }}</span><span class="toggler"><i class="fas fa-minus-square"></i></span></div>
+            <div class="items">{% for year, animes in anime_list_by_year.items %}{% if year == year_c %}{% for anime in animes %}
+				<div class="card {% if anime.airing %}blueish-glass{% else %}custom-color{% endif %} text-white border-white">
+					<div class="row no-gutters">
+						<div class="col-auto" style="background-image:url('{% static anime.cover_small %}');"></div>
+						<div class="col">
+							<div class="card-block">
+								<a class="card-title name" href="{% url 'MoeList:anime' anime.id %}">{{ anime.name }}</a>{% if anime.airing %}
+								<span class="badge badge-success">Airing</span>{% endif %}{% if anime.deleted %}
+								<span class="badge badge-success">Deleted</span>{% endif %}
+								<br>
+								<div class="episodes">
+									<div class="spinner-border text-light spinner" anilist_id={{anime.id}} style="display:none; margin: 0px 11px -5px 11px;"></div>
+									{{anime.episodes}}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>{% endfor %}{% endif %}{% endfor %}
+			</div>{% endfor %}
+        </div>
+		{% else %}
+			<p>No Anime are available.</p>
+		{% endif %}
+		<div class="modal fade" id="deletePopUp">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Delete file?</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        Delete <span id="file-delete-path"></span>?
+                    </div>
+                    <div class="modal-footer">
+                        <button id="deletefileforreal" type="button" class="btn btn-danger">Delete</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancle</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<style>
+			.card{
+				margin:10px;
+			}
+		</style>
+		<script>
+			var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+			function csrfSafeMethod(method) {
+				// these HTTP methods do not require CSRF protection
+				return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+			}
+			$.ajaxSetup({
+				beforeSend: function(xhr, settings) {
+					if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+						xhr.setRequestHeader("X-CSRFToken", csrftoken);
+					}
+				}
+			});
+			
+			function delete_file(t, anilist_id){
+				el = $(t).parent().prev();
+				ep = Number(el.children().text());
+				$.post("{% url 'MoeList:filepath' %}", {
+                    anilist_id: anilist_id,
+                    ep: ep
+                }, function(data, status) {
+                    if (status == "success") {
+                        $("#file-delete-path").text(data);
+                        $("#deletefileforreal").unbind();
+                        $("#deletefileforreal").click(function() {
+                            $.post("/MoeList/filedelete/", {
+                                anilist_id: anilist_id,
+                                ep: ep
+                            }, function(data, status) {
+                                if (status == "success") {
+                                    el.addClass("deleted");
+                                    $(t).addClass("disabled");
+                                    $(t).siblings().addClass("disabled");
+                                    $("#deletePopUp").modal("hide");
+                                    console.log(data);
+                                } else {
+                                    alert("Data: " + data + "\nStatus: " + status);
+                                }
+                            });
+                        });
+                        $("#deletePopUp").modal("show");
+                    } else {
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                });
+            }
+			
+			function file_handler(t, x, anilist_id, ep){
+				url = "{% url 'MoeList:file_handler' %}";
+				el = $(t).parent().prev();
+                $.post(url, {
+                    anilist_id: anilist_id,
+                    ep: ep,
+                    method: x,
+                    text: $(t).text()
+                }, function(data, status) {
+                    if (status == "success") {
+                        if (data["method"] == "toggle") {
+                            el.toggleClass("watched");
+                            el.toggleClass("new");
+                            $(t).text(data["response"]);
+                        } else if (data["method"] == "open") {
+                            console.log(data["response"]);
+                        }
+
+                    } else {
+                        console.log(data);
+                        console.log(status);
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                }, "json");
+            }
+			
+			$grid = $('.items').masonry({
+				itemSelector: '.card',
+				stagger: 30
+			});
+			
+			function bodyonresize(){
+				var itemsWidth = document.getElementsByClassName("items")[0].offsetWidth;
+				var margin = 10;
+				var baseWidth = Math.min(400, itemsWidth - 2*margin); //Change to change width of cards
+				var cardWidth = itemsWidth/Math.floor(itemsWidth/(baseWidth + 2*margin)) - 2*margin;
+				document.getElementById("toChange").innerHTML = ".card{width:" + cardWidth + "px;}";
+			}
+			
+			$('.toggler').click(function() {
+				$(this).parent().next().toggleClass("zero-height");
+				$(this).children().first().toggleClass("fa-minus-square");
+				$(this).children().first().toggleClass("fa-plus-square");
+			});
+			
+			function getAnimeLinks(t){
+				if(t.getAttribute('loaded') == "false"){
+					$.post("{% url 'MoeList:kwikLinkFromSession' %}",
+						{
+							anime_id: t.getAttribute('anime-id'),
+							session: t.getAttribute('session')
+						},
+						function(data,status){
+							t.parentElement.children[1].innerHTML = data;
+							t.setAttribute('loaded', 'true');
+							$(t).dropdown("toggle").dropdown("toggle");
+					});
+				}				
+			}
+			
+			var going_to_fix_layout = false;
+			function fixLayout(){
+				if (going_to_fix_layout == false){
+					setTimeout(function(){
+						$grid.masonry();
+						going_to_fix_layout = false;
+					}, 300);
+					going_to_fix_layout = true;
+				}
+			}
+			
+			$(document).ready(function(){
+				$('.spinner').each(function(){
+					var el = $(this);
+					el.show();
+					$.get('{% url 'MoeList:animeDownloadableEp' 1234567898 %}'.replace('1234567898', $(this).attr('anilist_id')), function(data, status){
+						el.parent().prepend(data);
+						el.remove();
+						fixLayout();
+					});
+					
+				});
+			});
+			
+			window.addEventListener("resize", bodyonresize);
+			setInterval(bodyonresize, 1000);
+			bodyonresize();
+			$grid.masonry();
+		</script>
+    </body>
+</html>

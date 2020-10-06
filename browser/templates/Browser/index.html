@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>File Manager</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="{% static 'Browser/icon.svg' %}">
+    <meta name="theme-color" content="#1d2124" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/swiper-bundle.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/style.css' %}">
+    <script src="{% static 'Browser/jquery.min.js' %}"></script>
+    <script src="{% static 'Browser/bootstrap.min.js' %}"></script>
+</head>
+
+<body>
+    {% csrf_token %}
+    <div class="container-fluid">
+        <div style="font-size: 1.5rem;" onclick="change_href(event);"><i class="far fa-folder-open"></i> {% if current %}{%for c in current_as_list %}<span>{{c}}/</span>{% endfor %}{% else %}Root{% endif %}</div>
+        <div id="tempId" class="table-responsive">
+            <table class="table table-hover table-dark table-sm">
+                <thead class="thead-dark">
+                    <tr class="">
+                        <th class="icon"></th>
+                        <th class="name col-auto">Name</th>
+                        <th class="size">Size</th>
+                        <th class="cdate">Date</th>
+                    </tr>
+                </thead>
+                <tbody>{% if current %}
+                    <tr class="folder ">
+                        <td class="icon"><i class="fas fa-angle-double-left"></i></td>
+                        <td class="name col-auto">..</td>
+                        <td class="size"></td>
+                        <td class="cdate"></td>
+                    </tr>{% endif %}{% for icon, name, cdate in folders %}
+                    <tr class="folder ">
+                        <td class="icon"><i class="fas {{icon}}"></i></td>
+                        <td class="name col-auto">{{name}}</td>
+                        <td class="size"></td>
+                        <td class="cdate">{{cdate}}</td>
+                    </tr>{% endfor %}{% for icon, name, cdate, type, size in files %}
+                    <tr class="files " type="{{type}}">
+                        <td class="icon"><i class="fas {{icon}}"></i></td>
+                        <td class="name col-auto">{{name}}</td>
+                        <td class="size">{{size}}</td>
+                        <td class="cdate">{{cdate}}</td>
+                    </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="modal fade" id="deletePopUp" style="color:black;">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Delete file?</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        Delete <span id="file-delete-path"></span>?
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button id="deletefileforreal" type="button" class="btn btn-danger">Delete</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancle</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div id="alert_box"></div>
+        <div id="view_box" class="pop swiper-container">
+            <div id="view_box_name" class="poptxt">Name of the image</div>
+            <div id="view_box_slide" class="swiper-wrapper">
+                <!-- Slides swiper-slide -->
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+            <button class="close" style="position: fixed; top: 0; right: 0; z-index: 2;" onclick="$('.swiper-slide').remove(); $(this).parent().hide();">&times;</button>
+        </div>
+        <div id="video_box" class="pop">
+            <button class="close" style="position: fixed; top: 0; right: 0; z-index: 2;" onclick="player.stop(); player.source = ''; $(this).parent().hide();">&times;</button>
+            <video id="player" playsinline controls></video>
+        </div>
+        <div id="file_rename_box" class="pop">
+            <div class="form-elms">
+                <div class="form-group">
+                    <label for="exampleInputEmail1">New Name</label>
+                    <input type="text" class="form-control" id="new_file_name" autocomplete="off" oninput="validate_filename(this.value);" aria-describedby="new_file_name_help_text" data-old-name="" value="">
+                    <small id="new_file_name_help_text" class="form-text" style="color: rgb(255, 89, 89);text-shadow: rgb(39, 23, 23) 0px 0px 4px;display: none;">Name is invalid</small>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="$('#file_rename_box').hide();">Cancle</button>
+                <button type="submit" class="btn btn-danger" id="new_file_name_submit" onclick="rename_file();" disabled>Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/jquery.contextMenu.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/fontawesome/css/solid.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/fontawesome/css/regular.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/fontawesome/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'Browser/plyr.css' %}">
+    <script src="{% static 'Browser/plyr.js' %}"></script>
+    <script src="{% static 'Browser/swiper-bundle.min.js' %}"></script>
+    <script src="{% static 'Browser/jquery.contextMenu.min.js' %}"></script>
+    <script src="{% static 'Browser/jquery.ui.position.min.js' %}"></script>
+    <script>
+        var current = '{% if current %}{{current}}{% else %}{% endif %}';
+        var url = "{% url 'Browser:file_methods' %}";
+        var filename_check_url = "{% url 'Browser:check_file_name' %}";
+
+        const player = new Plyr('#player');
+        window.player = player;
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        function validate_filename(t) {
+            $.post(filename_check_url, {
+                file_name: t
+            }, function(data, status) {
+                if (status == "success") {
+                    console.log(data);
+                    $('#new_file_name_submit').prop("disabled", !data);
+                    if (!data) {
+                        $('#new_file_name_help_text').show();
+                    } else {
+                        $('#new_file_name_help_text').hide();
+                    }
+                } else {
+                    console.log(data);
+                    console.log(status);
+                    alert("Data: " + data + "\nStatus: " + status);
+                }
+            }, "json");
+        }
+
+        function rename_file() {
+            t = $('#new_file_name');
+            $.post(url, {
+                method: "rename",
+                file: current + t.attr('data-old-name'),
+                new_name: t.val()
+            }, function(data, status) {
+                if (status == "success") {
+                    if ('alert' in data) {
+                        show_alert(data['alert']);
+                        $('.files').each(function() {
+                            if (this.children[1].innerText == data['old_name']) {
+                                this.children[1].innerText = data['new_name'];
+                                return false;
+                            }
+                        });
+                    } else if ('error' in data) {
+                        show_error(data['error']);
+                    } else {
+                        console.log(data);
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                } else {
+                    console.log(data);
+                    alert("Data: " + data + "\nStatus: " + status);
+                }
+            }, "json");
+
+            $('#file_rename_box').hide();
+            $('#new_file_name_submit').prop("disabled", true);
+        }
+    </script>
+    <script src="{% static 'Browser/script.js' %}"></script>
+</body>
+
+</html>

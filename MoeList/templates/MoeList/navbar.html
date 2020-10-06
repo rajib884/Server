@@ -1,0 +1,177 @@
+{% csrf_token %}
+			<nav class="navbar navbar-expand-md" style="justify-content: space-between;">
+				<button onclick="openSideNav(this);" class="navbar-toggler" style="display:inline-block; padding: initial; line-height: initial;" type="button">
+					<span class="navbar-toggler-icon" style="color: white; font-size: 26px;"><i class="fas fa-bars"></i></span>
+				</button>
+				<a href="{% url 'MoeList:index'%}" class="navbar-brand">MoeList</a>
+				<div class="options">
+					{% if navbar.select_random is True %}<span><i class="fas fa-random"></i></span>{% endif %}
+					{% if navbar.watched is True %}<span>Watched</span>{% endif %}
+					{% if navbar.watched is False %}<span>!Watched</span>{% endif %}
+					{% if navbar.deleted is True %}<span>Deleted</span>{% endif %}
+					{% if navbar.deleted is False %}<span>!Deleted</span>{% endif %}
+					{% if navbar.season is not None %}<span>{{navbar.season}}</span>{% endif %}
+					{% if navbar.year is not None %}<span>{{navbar.year}}</span>{% endif %}
+					{% if navbar.genre is not None %}<span>{{navbar.genre}}</span>{% endif %}
+					{% if navbar.status is not None %}<span>{{navbar.status}}</span>{% endif %}
+					{% if navbar.typ is not None %}<span>{{navbar.typ}}</span>{% endif %}
+				</div>
+			</nav>
+			<div id="mySidenav" class="sidenav">
+				<form class="search-container" action="{% url 'MoeList:search'%}">
+					<input id="searchbar" onkeyup="search_ajax(this);" type="text" style="width: 210px;" name="search" placeholder="Search.." autocomplete="off" spellcheck="false">
+					<div id="searchResult"></div>
+					<button type="submit" style="background-color: transparent; border: none;">
+						<i class="fas fa-search" style="color:white;"></i>
+					</button>
+				</form>
+				<div>{% if navbar.select_random is True %}
+					<a href="{% url 'MoeList:update_variables' 'select_random' 2 %}">Show All</a>{% else %}
+					<a href="{% url 'MoeList:update_variables' 'select_random' 1 %}">Random</a>{% endif %}
+				</div>
+				<div>{% if navbar.deleted is None %}
+					<a href="{% url 'MoeList:update_variables' 'deleted' 1 %}">Deleted Only</a>{% elif navbar.deleted is True%}
+					<a href="{% url 'MoeList:update_variables' 'deleted' 2 %}">Not Deleted Only</a>
+					<a href="{% url 'MoeList:update_variables' 'deleted' 0 %}"><i class="fas fa-times"></i></a>{% elif navbar.deleted is False%}
+					<a href="{% url 'MoeList:update_variables' 'deleted' 1 %}">Deleted Only</a>
+					<a href="{% url 'MoeList:update_variables' 'deleted' 0 %}"><i class="fas fa-times"></i></a>{% endif %}
+				</div>
+				<div>{% if navbar.watched is None %}
+					<a href="{% url 'MoeList:update_variables' 'watched' 1 %}">Watched Only</a>{% elif navbar.watched is True%}
+					<a href="{% url 'MoeList:update_variables' 'watched' 2 %}">Not Watched Only</a>
+					<a href="{% url 'MoeList:update_variables' 'watched' 0 %}"><i class="fas fa-times"></i></a>{% elif navbar.watched is False%}
+					<a href="{% url 'MoeList:update_variables' 'watched' 1 %}">Watched Only</a>
+					<a href="{% url 'MoeList:update_variables' 'watched' 0 %}"><i class="fas fa-times"></i></a>{% endif %}
+				</div>
+				<div>
+					<span>View:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'view' 'replace'%}'.replace('replace', this.value);">
+					{% for vw in navbar.views %}	<option value="{{vw}}" {% ifequal vw navbar.view %}selected="selected"{% endifequal %}>{{vw}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Status:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'status' 'replace'%}'.replace('replace', this.value);">
+					{% for status in navbar.statuses %}	<option value="{{status}}" {% ifequal status.lower navbar.status.lower %}selected="selected"{% endifequal %}>{{status}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Season:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'season' 'replace'%}'.replace('replace', this.value);">
+					{% for ssn in navbar.seasons %}	<option value="{{ssn}}" {% ifequal ssn.lower navbar.season.lower %}selected="selected"{% endifequal %}>{{ssn}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Year:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'year' 'replace'%}'.replace('replace', this.value);">
+					{% for yer in navbar.years %}	<option value="{{yer}}" {% ifequal yer navbar.year %}selected="selected"{% endifequal %}>{{yer}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Genre:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'genre' 'replace'%}'.replace('replace', this.value);">
+					{% for gnr in navbar.genres %}	<option value="{{gnr}}" {% ifequal gnr navbar.genre %}selected="selected"{% endifequal %}>{{gnr}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Type:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'typ' 'replace'%}'.replace('replace', this.value);">
+					{% for typ in navbar.types %}	<option value="{{typ}}" {% ifequal typ.lower navbar.typ.lower %}selected="selected"{% endifequal %}>{{typ}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Show Deleted Ep</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.deleted')">
+						<i class="fas fa-toggle-off"></i>
+					</button>
+				</div>
+				<div>
+					<span>Show Watched Ep</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.watched')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+				<div>
+					<span>Show New Ep</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.new')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+				<div>
+					<span>Show Downloadable Ep</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.download')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+			</div>
+			<script>
+				var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+				function csrfSafeMethod(method) {
+					// these HTTP methods do not require CSRF protection
+					return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+				}
+				$.ajaxSetup({
+					beforeSend: function(xhr, settings) {
+						if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+							xhr.setRequestHeader("X-CSRFToken", csrftoken);
+						}
+					}
+				});
+				function search_ajax(t){
+					url = "{% url 'MoeList:ajax_search' %}";
+					$.post(url,
+						{search: $(t).val()},
+						function(data, status){
+							if(status == "success"){
+								$('#searchResult').html(data);
+							} else {
+								console.log(data);
+								console.log(status);
+								alert("Data: " + data + "\nStatus: " + status);
+							}
+					});
+				}
+				function openSideNav(t){
+					if (document.getElementById('mySidenav').style.left == '0px') {
+						t.children[0].innerHTML = "<i class='fas fa-bars'></i>";
+						document.getElementById('mySidenav').style.left = '-300px';
+					} else {
+						t.children[0].innerHTML = "<i class='fas fa-times'></i>";
+						document.getElementById('mySidenav').style.left = '0px';
+					}
+				}
+				
+				//https://davidwalsh.name/add-rules-stylesheets
+				var sheet = (function() {
+					var style = document.createElement("style");
+					style.appendChild(document.createTextNode("")); // WebKit hack :(
+					document.head.appendChild(style);
+					style.sheet.insertRule(".deleted {display: none!important}");
+					style.sheet.insertRule(".watched {display: inline-block}");
+					style.sheet.insertRule(".new {display: inline-block}");
+					style.sheet.insertRule(".download {display: inline-block}");
+					return style.sheet;
+				})();
+				
+				function customFun1(t, selector) {
+					var l = sheet.cssRules.length;
+					var hidden = false;
+					for(i = 0; i<l; i++){
+						if (sheet.cssRules[i].selectorText == selector) break;
+					}
+					if(i<l) {
+						hidden = sheet.cssRules[i].cssText.includes('none');
+						sheet.deleteRule(i);
+					}
+					if (hidden) {
+						sheet.insertRule(selector + "{display: inline-block}");
+						t.innerHTML = "<i class='fas fa-toggle-on'></i>";
+					} else {
+						sheet.insertRule(selector + "{display: none!important}");
+						t.innerHTML = "<i class='fas fa-toggle-off'></i>";
+					}
+					try {fixLayout();}
+					catch(err) { console.log('fixLayout is not defined.');}
+				}
+				
+			</script>

@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "720": {
+                "audio": "jpn",
+                "crc32": "52f1533d",
+                "disc": "BD",
+                "fansub": "Dragon-Releases",
+                "filesize": 64334042,
+                "hq": 0,
+                "kwik": "https://kwik.cx/e/xJYTkUcIGTYO",
+                "kwik_adfly": "http://fainbory.com/3oQj",
+                "kwik_shst": "http://festyy.com/wNpoFQ",
+                "revision": "",
+                "server": "karma"
+            }
+        },
+        {
+            "1080": {
+                "audio": "jpn",
+                "crc32": "56d79cf3",
+                "disc": "BD",
+                "fansub": "Dragon-Releases",
+                "filesize": 106408937,
+                "hq": 0,
+                "kwik": "https://kwik.cx/e/r6adn5uj6CSH",
+                "kwik_adfly": "http://fainbory.com/3oQo",
+                "kwik_shst": "http://festyy.com/wNpoFH",
+                "revision": "",
+                "server": "karma"
+            }
+        }
+    ]
+}

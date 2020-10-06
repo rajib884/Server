@@ -1,0 +1,24 @@
+{% load static %}
+			<div class="year-divider text-white"><span class=" is-lighting">{{ year }}</span><span class="toggler" onclick="toggle(this)"><i class="fas fa-minus-square"></i></span></div>
+            <div class="items">{% for anime in anime_list %}
+				<div class="card {% if anime.airing %}blueish-glass{% else %}custom-color{% endif %} text-white border-white">
+					<div class="row no-gutters">
+						<div class="col-auto" style="background-image:url('{% static anime.cover_small %}');">
+							{% if anime.nextEp %}<span time="{{anime.nextEp}}" class="animetime"></span>{% endif %}
+						</div>
+						<div class="col">
+							<div class="card-block">
+								<a class="card-title name" href="{% url 'MoeList:anime' anime.id %}">{{ anime.name }}</a>{% if anime.airing %}
+								<span class="badge badge-success">Airing</span>{% endif %}{% if anime.deleted %}
+								<span class="badge badge-success">Deleted</span>{% endif %}{% if anime.completed %}
+                                <span class="badge badge-success">Completed</span>{% endif %}
+								<br>
+								<div class="episodes">
+									<div class="spinner-border text-light spinner" anilist_id={{anime.id}} style="display:none; margin: 0px 11px -5px 11px;"></div>
+									{{anime.episodes}}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>{% endfor %}
+			</div>

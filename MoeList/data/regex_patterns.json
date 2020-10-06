@@ -1,0 +1,13 @@
+[
+    "\\A(?P<name>\\S+?)--((?P<ep>\\d+?)|(?P<epRange>[0-9\\-]+?))--\\d+?(__\\S+?)?\\.(mkv|mp4)\\Z",
+    "\\AAnimePahe_(?P<name>\\S+?)_-_((?P<ep>\\d+?)|(?P<epRange>[0-9\\-]+?))_(DVD_|BD_)?(480p|576p|720p|1080p)_(HQ_|Die_)?([0-9a-zA-Z-]{3,16})(_\\d)?\\.(mp4|mkv)\\Z",
+    "\\A(?P<name>.+?)\\.(uncen\\.)?E?(?P<ep>\\d+?)\\.(Uncen\\.)?(BD\\.)?(\\[?(BD)?(720p?|1080p?)\\]?\\.)?(x265\\.)?(BD\\.)?(Dual\\.Audio\\.)?(x265\\.)?(AnimeList|AnimDL)\\.(ir|top)(\\.HS)?\\.mkv\\Z",
+    "\\A\\[HorribleSubs\\] ?(?P<name>.+?) - (?P<ep>\\d+?) (Uncen BD HD Dual Audio CBM|\\[720p\\])?\\.(mp4|mkv)\\Z",
+    "\\A(?P<name>.+?) - (?P<ep>\\d+?) \\[(720p|1080p)\\](\\[BD\\])? \\[(AnimeList|AnimDL)\\.ir\\]\\.mkv\\Z",
+    "\\A(?P<name>.+?) - (?P<ep>\\d+?) \\[(720p|1080p) BD\\](\\[D-A\\])?\\[(AnimeList|AnimDL)\\.ir\\]\\.mkv\\Z",
+    "\\A\\[bonkai77\\]\\.(?P<name>.+?)\\.Episode\\.(?P<ep>\\d+?)\\.\\w+?\\.1080p\\.Dual\\.Audio\\.Bluray \\[\\w+?\\]\\.mkv\\Z",
+    "\\A(?P<name>.+?) Ep (?P<ep>\\d+?) - .+?\\.mp4\\Z",
+    "\\A(?P<name>.+?)\\.(?P<ep>\\d+?)\\.([a-zA-Z.]+)?(720pBD|1080pBD)\\.AnimDL\\.ir\\.mkv\\Z",
+    "\\A(?P<name>.+?)\\.(?P<ep>\\d+?)\\[(720p|1080p)\\]\\.AnimDL\\.ir\\.mkv\\Z",
+    "\\A(?P<name>.+?) \\(Episode (?P<ep>\\d+?)\\)\\.mp4\\Z"
+]

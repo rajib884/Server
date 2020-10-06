@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include "MoeList/header.html" %}
+	</head>
+    <body style="padding-top: 55px;">
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>
+		<div class="container-fluid">
+			{% if banner %}
+			<div class="anime-cover" style="background-image: url('{% static banner %}');">
+				<img src="{% static banner %}" alt="{{anime.title}} cover" class="cover-helper">
+			</div>
+			{% endif %}
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Regex Patterns</th>
+						</tr>
+					</thead>
+					<tbody>{% for pattern in regexPatterns %}
+						<tr>
+							<td contenteditable>{{pattern}}</td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Folder</th>
+							<th>Scan Subfolder</th>
+							<th>Move</th>
+						</tr>
+					</thead>
+					<tbody>{% for folder, include_sub in folders %}
+						<tr>
+							<td>{{folder}}</td>
+							<td style="text-align: center;"><input class="form-check-input" type="checkbox" value=""{%if include_sub%} checked{%endif%}></td>
+							<td style="text-align: center;"><input class="form-check-input" type="checkbox" value="" disabled></td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+				<button type="button" class="btn btn-primary" onclick="$(this).next().toggle()">Add New</button>
+				<form>
+					<div class="form-group">
+						<label for="filename"></label>
+						<input type="text" class="form-control" id="filename" aria-describedby="FileNameHelp" placeholder="Enter File Name" autocomplete="off" spellcheck="false">
+						<small id="FileNameHelp" class="form-text">We'll never share your email with anyone else.</small>
+					</div>
+					<div class="form-group">
+						<label for="AnimeListName">AnimeList Name</label>
+						<input type="text" class="form-control" id="AnimeListName" aria-describedby="AnimeListHelp" placeholder="Enter AnimeList Name" autocomplete="off" spellcheck="false">
+						<small id="AnimeListHelp" class="form-text">We'll never share your email with anyone else.</small>
+					</div>
+					<button type="submit" class="btn btn-primary">Submit</button>
+				</form>
+			</div>
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Exception File Name</th>
+							<th>Anilist ID</th>
+							<th>EP</th>
+						</tr>
+					</thead>
+					<tbody>{% for exception, data in exceptions.items %}
+						<tr>
+							<td>{{exception}}</td>
+							<td style="text-align: center;">{{data.0}}</td>
+							<td style="text-align: center;">{{data.1}}</td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Replaced</th>
+							<th>With</th>
+						</tr>
+					</thead>
+					<tbody>{% for title, replace in titleReplace.items %}
+						<tr>
+							<td>{{title}}</td>
+							<td>{{replace}}</td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+				<button type="button" class="btn btn-primary" onclick="$(this).next().toggle()">Add New</button>
+				<form>
+					<div class="form-group">
+						<label for="filename">File Name</label>
+						<input type="text" class="form-control" id="filename" aria-describedby="FileNameHelp" placeholder="Enter File Name" autocomplete="off" spellcheck="false">
+						<small id="FileNameHelp" class="form-text">We'll never share your email with anyone else.</small>
+					</div>
+					<div class="form-group">
+						<label for="AnimeListName">AnimeList Name</label>
+						<input type="text" class="form-control" id="AnimeListName" aria-describedby="AnimeListHelp" placeholder="Enter AnimeList Name" autocomplete="off" spellcheck="false">
+						<small id="AnimeListHelp" class="form-text">We'll never share your email with anyone else.</small>
+					</div>
+					<button type="submit" class="btn btn-primary">Submit</button>
+				</form>
+			</div>
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Unrecognized</th>
+						</tr>
+					</thead>
+					<tbody>{% for name in unrecognized %}
+						<tr>
+							<td>{{name}}</td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			
+			<div style="display: grid;place-items: center;">
+				<table class="table table-sm table-dark table-striped">
+					<thead class="thead-light">
+						<tr>
+							<th>Not Video Files</th>
+						</tr>
+					</thead>
+					<tbody>{% for name in notVideos %}
+						<tr>
+							<td>{{name}}</td>
+						</tr>{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<style>
+			table {
+				max-width:70rem;
+			}
+			thead {
+				user-select: none;
+			}
+			thead > tr {
+				text-align: center;
+			}
+			form {
+				display: none; 
+				width: 100%;
+				max-width: 60rem;
+				background-color: #0000006b;
+				padding: 1rem 5rem;
+				margin: 1rem;
+			}
+			.form-group > label {
+				color: white;
+				padding: 2px 10px;
+			}
+			.form-text {
+				color:#ffd3d3;
+			}
+		</style>
+		<script>
+			var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+			function csrfSafeMethod(method) {
+				// these HTTP methods do not require CSRF protection
+				return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+			}
+			$.ajaxSetup({
+				beforeSend: function(xhr, settings) {
+					if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+						xhr.setRequestHeader("X-CSRFToken", csrftoken);
+					}
+				}
+			});
+			/*$('thead').click(function() {
+				$(this).next().toggle();
+			});*/
+		</script>
+	</body>
+</html>

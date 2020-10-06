@@ -1,0 +1,49 @@
+[
+    {
+        "domain": "kwik.cx",
+        "expiry": 1601873602,
+        "httpOnly": true,
+        "name": "kwik_session",
+        "path": "/",
+        "secure": false,
+        "value": "eyJpdiI6InJud2JBVVlDbHZHXC9mc2lucE9vWWdBPT0iLCJ2YWx1ZSI6ImpXRnd6T1wvTVwvaVpNaDh1S1ZXOTY5STBkRUVHc1VTXC9UXC9KWjdhQ1lzcWd3UkI1YWFzd3ArSXQ0YUZMKzgxNDZ2IiwibWFjIjoiNGVjOTQ0MGNiMWIzYTZjMTFhNzY3OTg4YWEyNDJhYzA5NGRkY2QxYWQwNDE3MzZkODgxNTMxNDYwNTYyYTVlYyJ9"
+    },
+    {
+        "domain": ".kwik.cx",
+        "expiry": 1601956401,
+        "httpOnly": true,
+        "name": "cf_clearance",
+        "path": "/",
+        "sameSite": "None",
+        "secure": true,
+        "value": "cfcce253b752eef9a43894e22d7a9ce2e389876e-1601866401-0-1z28155da4z6ee7624azc4354264-250"
+    },
+    {
+        "domain": "kwik.cx",
+        "expiry": 1601870000,
+        "httpOnly": false,
+        "name": "cf_chl_1",
+        "path": "/",
+        "secure": false,
+        "value": "0d1750461742d3e"
+    },
+    {
+        "domain": "kwik.cx",
+        "expiry": 1601870001,
+        "httpOnly": false,
+        "name": "cf_chl_prog",
+        "path": "/",
+        "secure": false,
+        "value": "a8"
+    },
+    {
+        "domain": ".kwik.cx",
+        "expiry": 1604197410,
+        "httpOnly": true,
+        "name": "__cfduid",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "d331441a4c42ba0240371b6b385207fbc1601605410"
+    }
+]

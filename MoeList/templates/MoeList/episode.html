@@ -1,0 +1,275 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include "MoeList/header.html" %}		
+		<link rel="stylesheet" type="text/css" href="{% static 'MoeList/plyr.css' %}" />
+		<script src="{% static 'MoeList/plyr.js' %}"></script>
+	</head>
+    <body style="padding-top:58px;">
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>
+		<div class=".container-fluid">
+			<div class="row no-gutters">
+				<div class="col-auto">
+					<div class="video-container">
+						<video id="player" {% if thumb %}poster="{% static thumb %}"{% endif %} playsinline controls>
+							<source src="{% url 'MoeList:open' %}?path={{episode.path}}">
+							{% if sub %}
+							<track kind="captions" label="English captions" src="{% url 'MoeList:open' %}?path={{sub}}" srclang="en" default>
+							{% endif %}
+						</video>
+						<div class="progress"></div>
+					</div>
+				</div>
+				<div class="container-fluid playlist-parent col" style="border:solid 3px #363636;">
+					<div class="playlist-top" style="color:white;background-color:#202020;border-bottom: solid 3px #363636;min-height: 40px;">
+					<a class="name" style="text-align:center;" href="{% url 'MoeList:anime' anilist_id %}">{{ anime.title }}</a></br>
+					<span>Now playing Episode {{ ep }}</span>
+					</div>
+					<div style="overflow-y: scroll;">
+						<div class="items playlist-elems">
+						{% for eps in episodes %}
+							<div class="card bg-dark text-white border-white playlist-elem {% if not eps.available or not eps.thumb %}deleted{% endif %}" style="border-width:2px;{% if eps.ep == ep %}border-color:yellow!important;{% endif %}">
+								<img class="card-img-top" src="{% if eps.available and eps.thumb %}{% static eps.thumb %}{% else %}{% static 'notAvailable.png' %}{% endif %}" {% if eps.ep == ep %}style="opacity:0.3; "{% endif %}/>
+								<div class="card-img-overlay">
+									<div class="card-block card-content-ep">
+										<a class="card-title name" href="#" style="padding-left:5px; padding-right:5px; background-color: #00000080;">Ep {{ eps.ep }}</a>
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script>
+			var watchedPart = {{watchedPart}};
+			var lastWatched = {{lastWatched}};
+			if (lastWatched == 100) lastWatched = 0;
+			const player = new Plyr('#player', {
+				keyboard: { focused: true, global: true },
+			});
+			player.on("loadedmetadata", function(){
+				player.currentTime = Math.max(0, lastWatched*player.duration/100);
+				$('.progress').empty();
+				var currentPercent = Math.round(100*player.currentTime/player.duration);
+				for(var i=0; i<100; i++){
+					if (watchedPart.indexOf(i) == -1){
+						$('.progress').append('<div class="progress-bar bg-info" role="progressbar" style="width:1%"></div>');
+					} else {
+						if (i == currentPercent){
+							$('.progress').append('<div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width:1%"></div>');
+						} else {
+							$('.progress').append('<div class="progress-bar bg-danger" role="progressbar" style="width:1%"></div>');
+						}
+					}
+				}
+				set_height();
+			});
+			
+			player.on("ready", function(event){
+				console.log("Ready.....................................................");
+				{% if prev_ep %}
+				$('<button type="button" class="plyr-prev plyr__control"><i class="fa fa-step-backward fa-lg"></i></button>').insertBefore('.plyr__controls [data-plyr="play"]');
+				$('.plyr-prev').click(function(){window.location.href='{% url 'MoeList:episode' anilist_id prev_ep %}';});
+				{% endif %}
+				$('<button type="button" class="plyr-fast-forward plyr__control"><i class="fa fa-fast-backward fa-lg"></i></button>').insertBefore('.plyr__controls [data-plyr="play"]');
+				$('.plyr-fast-forward').click(function(){player.currentTime = Math.max(player.currentTime - 85, 0);});
+				{% if next_ep %}
+				$('<button type="button" class="plyr-next plyr__control"><i class="fa fa-step-forward fa-lg"></i></button>').insertAfter('.plyr__controls [data-plyr="play"]');
+				$('.plyr-next').click(function(){window.location.href='{% url 'MoeList:episode' anilist_id next_ep %}';});
+				{% endif %}
+				$('<button type="button" class="plyr-fast-backward plyr__control"><i class="fa fa-fast-forward fa-lg"></i></button>').insertAfter('.plyr__controls [data-plyr="play"]');
+				$('.plyr-fast-backward').click(function(){player.currentTime = Math.min(player.currentTime + 85, player.duration);});
+				player.play();
+			});
+			player.on("timeupdate", function(){
+				var currentPercent = Math.round(100*player.currentTime/player.duration);
+				if (currentPercent != NaN && currentPercent != lastWatched){
+					lastWatched = currentPercent;
+					if (watchedPart.indexOf(currentPercent) == -1){
+						watchedPart.push(currentPercent);
+					}
+					$.post(
+						"{% url 'MoeList:watched_part' anilist_id ep %}",
+						{ watchedPart: currentPercent }, 
+						function(data,status){
+							console.log(data);
+						}
+					);
+					$('.progress').empty();
+					for(var i=0; i<100; i++){
+						if (watchedPart.indexOf(i) == -1){
+							$('.progress').append('<div class="progress-bar bg-info" role="progressbar" style="width:1%"></div>');
+						} else {
+							if (i == currentPercent){
+								$('.progress').append('<div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width:1%"></div>');
+							} else {
+								$('.progress').append('<div class="progress-bar bg-danger" role="progressbar" style="width:1%"></div>');
+							}
+						}
+					}
+				}
+			});
+			{% if next_ep %}
+			player.on("ended", function (event) {
+				window.location.href='{% url 'MoeList:episode' anilist_id next_ep %}';
+			});
+			{% endif %}
+			
+			$(document).keyup(function(e){
+				if(e.ctrlKey == true){
+					switch(e.key){
+						case "ArrowRight":
+							player.currentTime = Math.min(player.currentTime + 85, player.duration);
+							break;
+						case "ArrowLeft":
+							player.currentTime = Math.max(player.currentTime - 85, 0);
+							break;
+						case "ArrowUp":
+							player.volume = 1;
+							break;
+						case "ArrowDown":
+							player.volume = 0;
+							break;
+					}
+				} else if (e.shiftKey == true){
+					switch(e.key){
+						case "ArrowRight":
+							player.currentTime = Math.min(player.currentTime + 1, player.duration);
+							break;
+						case "ArrowLeft":
+							player.currentTime = Math.max(player.currentTime - 1, 0);
+							break;
+					}
+				}
+			});
+			$(document).keypress(function(e){
+					switch(e.key){
+						case ".":
+							player.currentTime = Math.min(player.currentTime + 0.1, player.duration);
+							player.pause();
+							break;
+						case ",":
+							player.currentTime = Math.max(player.currentTime - 0.1, 0);
+							player.pause();
+							break;
+						case "p":
+							if(player.paused) player.play();
+							else player.pause();
+							break;
+					}
+			});
+			
+			function set_height(){
+				if (player.ratio != null){
+					$('.video-container').width(Math.min($(window).width(), Math.max($(window).height() - 58, 200) * player.ratio.split(":")[0]/player.ratio.split(":")[1]));
+				} else {
+					$('.video-container').width(Math.min($(window).width(), Math.max($(window).height() - 58, 200) * 16/9));
+				}
+				//if($(window).width() > 992)
+					//$('.playlist-elems').height($('.video-container').height() - $('.playlist-top').height() - 19);
+				//else
+				//	$('.playlist-elems').height(Math.max($(document).height() - $('.video-container').height() - $('.playlist-top').height() - 10, 300));
+				
+				//$('.playlist-elem').width(Math.floor($('.playlist-elems').width()/Math.ceil($('.playlist-elems').width()/200) - 12));
+				//console.log();
+				
+				if($(window).width() < 480) {
+					if($(document.body).width() < 400) {
+						$('.plyr-next').hide();
+						$('.plyr-prev').hide();
+						$('.plyr-fast-forward').hide();
+						$('.plyr-fast-backward').hide();
+					} else {
+						$('.plyr-next').hide();
+						$('.plyr-prev').hide();
+						$('.plyr-fast-forward').show();
+						$('.plyr-fast-backward').show();
+					}
+				} else {
+					$('.plyr-next').show();
+					$('.plyr-prev').show();
+					$('.plyr-fast-forward').show();
+					$('.plyr-fast-backward').show();
+				}
+			}
+			$(window).resize(set_height);
+			$(document).ready(set_height);
+			$('.playlist-elem').click(function(){
+				window.location.href='{% url 'MoeList:episode' anilist_id 1234567 %}'.replace('1234567', $.trim($(this).text()).replace("Ep ", ""));
+			});
+			$('.progress').click(function(event){
+				player.currentTime = Math.min(Math.max(0, $('.progress-bar').index(event.toElement)*player.duration/100), player.duration);
+			});
+			
+			
+		</script>
+		<style>
+			body {
+				background-color:#181818;
+			}
+			video {
+				max-height:100vh;
+			}
+			/*
+			@keyframes canim{
+				from { opacity:1; }
+				to { opacity:0; }
+			}
+			.main-header, .navbar {
+				opacity:0;
+				animation-name:canim;
+				animation-duration: 1s;
+				transition: opacity 0.5s;
+				
+			}
+			.main-header:hover {
+				opacity:1;
+				transition: opacity 0.2s;
+			}			
+			.navbar:hover {
+				opacity:1;
+				transition: opacity 0.2s;
+			}*/
+			.playlist-top {
+				padding:5px;
+			}
+			.card-content-ep {
+				position: absolute;
+				bottom: 3px;
+				left: 3px;
+			}
+			.playlist-elem {
+				opacity:1;
+				transition: opacity 0.1s;
+			}
+			.playlist-elem:hover {
+				opacity:0.6;
+			}
+			.playlist-elems {
+				//overflow-y: scroll;
+				display: grid;
+				grid-gap: 2px;
+				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+			}
+			.playlist-parent {
+				max-height: calc(100vh - 42px);
+				display: grid;
+				grid-template-rows: auto 1fr;
+			}
+			.plyr-prev, .plyr-next, .plyr-fast-backward, .plyr-fast-forward {
+				margin-right: 0 !important;
+				padding: 3px 7px 2px 7px;
+			}
+			.plyr__controls [data-plyr="play"] {
+				margin-left: 0 !important;
+			}
+			
+		</style>
+	</body>
+</html>

@@ -1,0 +1,340 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include "MoeList/header.html" %}
+	</head>
+    <body>
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>
+      <div class="container-fluid">
+		{% if banner %}
+		<div class="anime-cover" style="background-image: url('{% static banner %}');">
+			<img src="{% static banner %}" alt="{{anime.title}} cover" class="cover-helper">
+		</div>
+		{% endif %}
+		<header class="anime-header">
+			<div class="title-wrapper">
+				<div class="poster-wrapper">
+					<div class="anime-poster">
+						<img  alt="Poster of {{anime.title}}" src="{% static cover %}">
+					</div>
+				</div>
+				<h1 class="is-lighting">{{anime.title}}</h1>
+				{% if anime.titleJp is not None %}<h2>{{anime.titleJp}}</h2>{% endif%}
+			</div>
+		</header>
+		<div class="nav-wrapper">
+			<ul class="nav nav-pills" role="tablist">
+				<li class="nav-item">
+					<a class="nav-link active" data-toggle="pill" href="#summary">Summary</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="pill" href="#relations">Relations</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="pill" href="#options">Options</a>
+				</li>
+			</ul>
+		</div>
+		<div class="anime-content">
+			<div class="bg tab-content">
+				<div id="summary" class="tab-pane anime-detail anime-3244 row active">
+					<div class="col-sm-8 anime-summary">
+						<div class="anime-synopsis" style="max-height: 265px;">{{ anime.description|safe }}</div>
+						<div id="synopsis-read-more" style="display:none;" class="synopsis-read-more" onclick="$(this).prev().css('max-height', ''); $(this).hide()"><p class="mx-auto">Read More</p></div>
+					</div>
+					<div class="col-sm-4 anime-info">
+						{% if anime.nextEp is not None %}<p><strong>Next Ep: </strong> Ep {{anime.nextEp.episode}} in <span time="{{anime.nextEp.airingAt}}" class="animetime"></span></p>{% endif %}
+						<p><strong>Synonyms: </strong> {{anime.titleEn}}</p>
+						<p><strong>Type:</strong> <a href="{% url 'MoeList:update_options' 'typ' anime.type%}" title="{{anime.type}}"> {{anime.type}}</a></p>
+						<p><strong>Episode:</strong>{% if anime.episodes is not None %}{{anime.episodes}}{% else %} ?? {% endif %}</p>
+						<p><strong>Status:</strong><a href="{% url 'MoeList:update_options' 'status' anime.status %}" title={{anime.status}}"> {{anime.status}}</a></p>
+						<p><strong>Season:</strong> <a href="{% url 'MoeList:update_options' 'season' anime.season %}" title="{{anime.season}}"> {{anime.season}}</a></p>
+						<p><strong>Year:</strong> <a href="{% url 'MoeList:update_options' 'year' anime.year %}" title="{{anime.year}}"> {{anime.year}}</a></p>
+						<p><strong>Anilist Id: </strong> {{anilist_id}}</p>
+						<p><strong>External Links:</strong> 
+							<a href="{% if anime.mal is not None %}https://myanimelist.net/anime/{{anime.mal}}{% else %}#{% endif %}" target="_blank">MyAnimeList</a>,
+							<a href="{% if anime.animepahe_id is not None %}https://pahe.win/a/{{anime.animepahe_id}}{% else %}https://animepahe.com/api?m=search&l=8&q={{anime.title}}{% endif %}" target="_blank">Animepahe</a>,
+							<a href="https://anilist.co/anime/{{anilist_id}}" target="_blank">Anilist</a>
+						</p>
+						<div class="anime-genre">
+							<ul>
+								{% for genre in anime.genres %}<li>
+									<a href="{% url 'MoeList:update_options' 'genre' genre%}" title="{{genre}}">{{genre}}</a>
+								</li>{% endfor %}
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div id="relations" class="tab-pane anime-relation row">
+					{% for relation in relations %}<div class="col-12 col-sm-6 col-xl-4">
+						<h4><span>{{relation.relationType}}</span></h4>
+						<div class="row">
+							<div class="media col-12 col-sm-12">
+								<a href="{% url 'MoeList:anime' relation.id %}" title="{{relation.title}}"><img class="d-flex mr-3 rounded " src="{% static relation.cover %}" alt="Poster of {{relation.title}}"></a>
+								<div class="media-body">
+									<h5><a href="{% url 'MoeList:anime' relation.id %}" title="{{relation.title}}">{{relation.title}}</a></h5>
+									<strong><a href="" title="{{relation.type}}">{{relation.type}}</a></strong> - {{relation.episodes}} Ep ({{relation.status}})
+									<br>
+									<a href="" >{{relation.season}} {{relation.year}}</a>
+								</div>
+							</div>
+						</div>
+					</div>{% endfor %}
+				</div>
+				<div id="options" class="tab-pane anime-options row">
+					<button class="btn delete-info" data-toggle="modal" data-target="#anime-delete-modal" style=" max-width:200px; margin:5px;">Delete this Anime</button>
+					<a class="btn" href="{% url 'MoeList:watched_all' anilist_id %}" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Watched All</a>
+					<a class="btn" href="{% url 'MoeList:reload_info' anilist_id %}" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Reload info</a>
+					<a class="btn" onclick="download_all();" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Downlo0ad</a>
+				</div>
+			</div>
+		</div>
+		<div id="anime-delete-modal" class="modal fade">
+			<div class="modal-dialog modal-dialog-centered"">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Delete this Anime?</h4>
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+					</div>
+					<div class="modal-body">
+						<p>It will delete info, not episodes.</p>
+					</div>
+					<div class="modal-footer">
+						<form action="{% url 'MoeList:delete'%}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="anime_id" value="{{ anilist_id }}">
+							<button id="deleteanimeforreal" type="submit" class="btn btn-danger" >Delete</button>
+						</form>
+						<button type="button" class="btn btn-primary" data-dismiss="modal">Cancle</button>
+					</div>
+				</div>
+			
+			</div>
+		</div>
+		<div class="episode-bar row">
+			<div class="col-6">
+				<h2 class="is-lighting">Episodes</h2>
+			</div>
+		</div>
+		<div class="episodes"><div class="spinner-border text-light" id="spinner" style="display:none; margin: 0px 11px -5px 11px;"></div>
+					{{episodes}}
+		</div>
+		<!-- The Modal -->
+		<div class="modal fade" id="deletePopUp">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+				
+					<!-- Modal Header -->
+					<div class="modal-header">
+					<h4 class="modal-title">Delete file?</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					</div>
+					
+					<!-- Modal body -->
+					<div class="modal-body">
+					Delete <span id="file-delete-path"></span>?
+					</div>
+					
+					<!-- Modal footer -->
+					<div class="modal-footer">
+					<button id="deletefileforreal" type="button" class="btn btn-danger" >Delete</button>
+					<button type="button" class="btn btn-primary" data-dismiss="modal">Cancle</button>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	  </div>
+		<script>
+			/*function getCookie(name) {
+				var cookieValue = null;
+				if (document.cookie && document.cookie !== '') {
+					var cookies = document.cookie.split(';');
+					for (var i = 0; i < cookies.length; i++) {
+						var cookie = cookies[i].trim();
+						// Does this cookie string begin with the name we want?
+						if (cookie.substring(0, name.length + 1) === (name + '=')) {
+							cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+							break;
+						}
+					}
+				}
+				return cookieValue;
+			}
+			//var csrftoken = getCookie('csrftoken');*/
+			var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+			//console.log(csrftoken);
+			function csrfSafeMethod(method) {
+				// these HTTP methods do not require CSRF protection
+				return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+			}
+			$.ajaxSetup({
+				beforeSend: function(xhr, settings) {
+					if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+						xhr.setRequestHeader("X-CSRFToken", csrftoken);
+					}
+				}
+			});
+			
+			function delete_file(t, anilist_id){
+				el = $(t).parent().prev();
+				ep = Number(el.children().text());
+				$.post("{% url 'MoeList:filepath' %}",
+						{
+							anilist_id: anilist_id,
+							ep: ep
+						},
+						function(data,status){
+							if(status == "success"){
+								$("#file-delete-path").text(data);
+								$("#deletefileforreal").unbind();
+								$("#deletefileforreal").click(function(){
+									$.post("{% url 'MoeList:fileDelete' %}",
+										{
+											anilist_id: anilist_id,
+											ep: ep
+										},
+										function(data,status){
+											if(status == "success"){
+												el.addClass("deleted");
+												$(t).addClass("disabled");
+												$(t).siblings().addClass("disabled");
+												$("#deletePopUp").modal("hide");
+												console.log(data);
+											} else {
+												alert("Data: " + data + "\nStatus: " + status);
+											}
+										});
+								});
+								$("#deletePopUp").modal("show");
+							} else {
+								alert("Data: " + data + "\nStatus: " + status);
+							}
+					});
+			}
+			
+			function visited(t){
+				$(t).parent().prev().addClass('downloaded').removeClass('download');
+			}
+			
+			$(document).ready(function(){
+				$("#spinner").show();
+				if($("#synopsis-read-more").prev().height() >= parseInt($("#synopsis-read-more").prev().css('max-height'), 10))
+					$("#synopsis-read-more").show();
+				$.get("{% url 'MoeList:animeDownloadableEpRefresh' anilist_id %}", function(data, status){
+					$(".episodes").prepend(data);
+					$("#spinner").remove();
+				});
+			});
+			function file_handler(t, x, anilist_id, ep){
+				url = "{% url 'MoeList:file_handler' %}";
+				el = $(t).parent().prev();
+				$.post(
+					url,
+					{
+						anilist_id: anilist_id,
+						ep: ep,
+						method: x,
+						text: $(t).text()
+					},
+					function(data,status){
+						if(status == "success"){
+							if(data["method"] == "toggle"){
+								el.toggleClass("watched");
+								el.toggleClass("new");
+								$(t).text(data["response"]);
+							} else if(data["method"] == "open"){
+								console.log(data["response"]);
+							}
+							
+						} else {
+							console.log(data);
+							console.log(status);
+							alert("Data: " + data + "\nStatus: " + status);
+						}
+					}, 
+					"json"
+				);
+			}
+			
+			function getAnimeLinks(t){
+				if(t.getAttribute('loaded') == "false"){
+					$.post("{% url 'MoeList:kwikLinkFromSession' %}",
+						{
+							anilist_id: t.getAttribute('anilist_id'),
+							ep: t.getAttribute('ep'),
+							anime_id: t.getAttribute('anime-id'),
+							session: t.getAttribute('session')
+						},
+						function(data,status){
+							t.parentElement.children[1].innerHTML = data;
+							t.setAttribute('loaded', 'true');
+							$(t).dropdown("toggle").dropdown("toggle");
+					});
+				}
+			}
+			
+			function download_all(){
+				els = $('.download').get().reverse();
+				for(i=0; i<els.length; i++){
+					if(els[i].getAttribute('loaded') == "false"){
+						t = els[i];
+						console.log("Start");
+						$.post("{% url 'MoeList:kwikLinkFromSession' %}",
+							{
+								anilist_id: t.getAttribute('anilist_id'),
+								ep: t.getAttribute('ep'),
+								anime_id: t.getAttribute('anime-id'),
+								session: t.getAttribute('session')
+							},
+							function(data,status){
+								t.parentElement.children[1].innerHTML = data;
+								t.setAttribute('loaded', 'true');
+								$(t).dropdown("toggle");
+								$(t).addClass('downloaded').removeClass('download');
+								console.log("OO");
+								dnld = window.open($(t).next().children().last().attr("href"), 'Download', 'width=200,height=200');
+								console.log("??");
+								if (dnld == null)
+									alert("Null");
+								else
+									dnld.onbeforeunload = function(){download_all()};
+								
+						});
+						console.log("End");
+						break;
+					}
+				}
+			}
+			
+			
+			function twoDigit(vlu) {
+				var tempvlu = Number(vlu);
+				if (tempvlu / 10 < 1)
+					return "0" + tempvlu;
+				else
+					return tempvlu;
+			}
+			function changeDate(){
+				var d = new Date();
+				var n = Math.round(d.getTime()/1000);
+				$(".animetime").each(function(){
+					var this_time = this.getAttribute("time") - n;
+					var time_Text = "";
+					if (Math.floor(this_time / 604800) > 0)
+						time_Text += Math.floor(this_time / 604800) + "w ";
+					if (Math.floor(this_time / 86400 % 7) > 0)
+						time_Text += Math.floor(this_time / 86400 % 7) + "d ";
+					time_Text += twoDigit(Math.floor(this_time / 3600 % 24)) + ":";
+					time_Text += twoDigit(Math.floor(this_time / 60 % 60)) + ":";
+					time_Text += twoDigit(Math.floor(this_time % 60));
+					this.innerHTML = time_Text;
+				});
+			}
+			setInterval(changeDate, 1000);
+		</script>
+	</body>
+</html>

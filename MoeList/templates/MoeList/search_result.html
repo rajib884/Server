@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		{% include "MoeList/header.html" %}
+		<style>
+		img {
+			max-height:100%;
+			max-width:100%;
+		}
+		.card-block {
+			padding-left: 10px;
+		}
+		.col-auto {
+			width:80px;
+		}
+		</style>
+	</head>
+    <body style="padding-top: 55px;">
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>
+		<div class="container-fluid">
+            <div class="items">
+			{% for anime in result %}
+				<div class="card blueish-glass text-white border-white">
+					<div class="row no-gutters">
+						<div class="col-auto"><img src="{{ anime.thumb }}"/></div>
+						<div class="col">
+							<div class="card-block">
+								<a class="card-title name" href="{% url 'MoeList:anime' anime.id %}">{{ anime.title }}</a><br/>
+								<span class="badge badge-success">{{ anime.status }}</span><br/>
+								<span>{{ anime.format }}, {{ anime.episodes }} Episodes</span><br/>
+								<span>{{ anime.season}} {{ anime.year }}</span><br/>
+							</div>
+						</div>
+					</div>
+                </div>
+			{% endfor %}
+			</div>
+		</div>
+	</body>
+</html>

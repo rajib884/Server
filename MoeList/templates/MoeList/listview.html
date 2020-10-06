@@ -1,0 +1,401 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include "MoeList/header.html" %}
+        <style id="toChange">
+            * {}
+        </style>
+        <style>
+            .card-block {
+                padding-left: 10px;
+                min-height: 100px;
+            }
+            .col-auto {
+                width: 100px;
+                background-size: cover;
+                background-position: center;
+            }
+            .items {
+                margin-bottom: 20px;
+                background-color: #0028ff36;
+                transition: height 0.2s;
+                overflow: hidden;
+            }
+            .zero-height {
+                height: 0!important;
+            }
+            .year-divider {
+                background-color: #ff000000;
+                width: 100%;
+                margin: 8px auto 2px!important !important;
+                padding: 0 0 4px 10px;
+                background-image: linear-gradient(to right, #151560 , #22222200);
+                font-size: 25px;
+                border-radius: 0.5rem;
+                border-width: 0;
+                border-bottom: 5px solid;
+                border-image-slice: 1;
+                border-image-source: linear-gradient(to right, #ffffff, #ff000000);
+                display: flex;
+                justify-content: space-between;
+            }
+            .custom-color {
+                background-color: #1565c066;
+            }
+            .end {
+                width: 100%;
+                height: 500px;
+            }
+            .loader-ellips {
+                font-size: 20px;
+                position: relative;
+                width: 4em;
+                height: 1em;
+                margin: 10px auto;
+            }
+            .loader-ellips__dot {
+                display: block;
+                width: 1em;
+                height: 1em;
+                border-radius: 0.5em;
+                background: #555;
+                position: absolute;
+                animation-duration: 0.5s;
+                animation-timing-function: ease;
+                animation-iteration-count: infinite;
+            }
+            .loader-ellips__dot:nth-child(1),
+            .loader-ellips__dot:nth-child(2) {
+                left: 0;
+            }
+            .loader-ellips__dot:nth-child(3) {
+                left: 1.5em;
+            }
+            .loader-ellips__dot:nth-child(4) {
+                left: 3em;
+            }
+            @keyframes reveal {
+                from {
+                    transform: scale(0.001);
+                }
+                to {
+                    transform: scale(1);
+                }
+            }
+            @keyframes slide {
+                to {
+                    transform: translateX(1.5em);
+                }
+            }
+            .loader-ellips__dot:nth-child(1) {
+                animation-name: reveal;
+            }
+            .loader-ellips__dot:nth-child(2),
+            .loader-ellips__dot:nth-child(3) {
+                animation-name: slide;
+            }
+            .loader-ellips__dot:nth-child(4) {
+                animation-name: reveal;
+                animation-direction: reverse;
+            }
+            span.animetime {
+                width: 100%;
+                background-color: #311b92ba;
+                display: block;
+                overflow: hidden;
+                text-align: right;
+                word-break: break-all;
+                font-size: small;
+                height: 1.25rem;
+                position: absolute;
+                bottom: 0;
+            }
+        </style>
+    </head>
+    <body style="padding-top: 55px;">
+        <header class="main-header">
+            {% include "MoeList/navbar.html" %}
+        </header>
+        {% if banner %}
+            <div class="anime-cover" style="background-image: url('{% static banner %}');">
+                <img src="{% static banner %}" alt="cover" class="cover-helper">
+            </div>
+        {% endif %}
+        {% if anime_list %}
+            <div class="container-fluid">
+                <div class="year-divider text-white">
+                    <span class=" is-lighting">Airing</span>
+                    <span class="toggler" onclick="toggle(this)">
+                        <i class="fas fa-minus-square"></i></span></div>
+                <div class="items">
+                    {% for anime in anime_list %}
+                        {% if anime.airing %}
+                            <div class="card blueish-glass text-white border-white">
+                                <div class="row no-gutters">
+                                    <div class="col-auto" style="background-image:url('{% static anime.cover_small %}');">
+                                        {% if anime.nextEp %}
+                                            <span time="{{anime.nextEp}}" class="animetime"></span>{% endif %}
+                                    </div>
+                                    <div class="col">
+                                        <div class="card-block">
+                                            <a class="card-title name" href="{% url 'MoeList:anime' anime.id %}">{{ anime.name }}</a>
+                                            {% if anime.airing %}
+                                                <span class="badge badge-success">Airing</span>{% endif %}
+                                            {% if anime.deleted %}
+                                                <span class="badge badge-success">Deleted</span>{% endif %}
+                                            {% if anime.completed %}
+                                                <span class="badge badge-success">Completed</span>{% endif %}
+                                            <br>
+                                            <div class="episodes">
+                                                <div class="spinner-border text-light spinner" anilist_id="{{anime.id}}" style="display:none; margin: 0px 11px -5px 11px;"></div>
+                                                {{anime.episodes}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="container-fluid">
+                <p style="display:none">No Anime are available.</p>
+            </div>
+        {% endif %}
+        <div class="modal fade" id="deletePopUp">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Delete file?</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        Delete
+                        <span id="file-delete-path"></span>?
+                    </div>
+                    <div class="modal-footer">
+                        <button id="deletefileforreal" type="button" class="btn btn-danger">Delete</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancle</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="load_more" onclick="$container.infiniteScroll('loadNextPage');" class="btn btn-primary" style="display: block;margin: 0px auto;background-color: rgba(0, 123, 255, 0.15);">Load More</button>
+        <div class="loader-ellips">
+            <span class="loader-ellips__dot"></span>
+            <span class="loader-ellips__dot"></span>
+            <span class="loader-ellips__dot"></span>
+            <span class="loader-ellips__dot"></span>
+        </div>
+        <style>
+            .card {
+                margin: 10px;
+            }
+        </style>
+        <script>
+            var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+
+            function visited(t) {
+                $(t).parent().prev().addClass('downloaded').removeClass('download');
+            }
+
+            function delete_file(t, anilist_id) {
+                el = $(t).parent().prev();
+                ep = Number(el.children().text());
+                $.post("{% url 'MoeList:filepath' %}", {
+                    anilist_id: anilist_id,
+                    ep: ep
+                }, function (data, status) {
+                    if (status == "success") {
+                        $("#file-delete-path").text(data);
+                        $("#deletefileforreal").unbind();
+                        $("#deletefileforreal").click(function () {
+                            $.post("/MoeList/filedelete/", {
+                                anilist_id: anilist_id,
+                                ep: ep
+                            }, function (data, status) {
+                                if (status == "success") {
+                                    el.addClass("deleted");
+                                    $(t).addClass("disabled");
+                                    $(t).siblings().addClass("disabled");
+                                    $("#deletePopUp").modal("hide");
+                                    console.log(data);
+                                } else {
+                                    alert("Data: " + data + "\nStatus: " + status);
+                                }
+                            });
+                        });
+                        $("#deletePopUp").modal("show");
+                    } else {
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                });
+            }
+
+            function file_handler(t, x, anilist_id, ep) {
+                url = "{% url 'MoeList:file_handler' %}";
+                el = $(t).parent().prev();
+                $.post(url, {
+                    anilist_id: anilist_id,
+                    ep: ep,
+                    method: x,
+                    text: $(t).text()
+                }, function (data, status) {
+                    if (status == "success") {
+                        if (data["method"] == "toggle") {
+                            el.toggleClass("watched");
+                            el.toggleClass("new");
+                            $(t).text(data["response"]);
+                        } else if (data["method"] == "open") {
+                            console.log(data["response"]);
+                        }
+
+                    } else {
+                        console.log(data);
+                        console.log(status);
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                }, "json");
+            }
+
+            $grid = $('.items').masonry({itemSelector: '.card', stagger: 30});
+
+            function bodyonresize() {
+				if (document.getElementsByClassName("items").length == 0){
+					console.log("No Elements with class 'items' found, checking 200ms later.");
+					setTimeout(bodyonresize, 200);
+					return;
+				}
+                var itemsWidth = document.getElementsByClassName("items")[0].offsetWidth;
+                var margin = 10;
+                var baseWidth = Math.min(400, itemsWidth - 2 * margin); //Change to change width of cards
+                var cardWidth = itemsWidth / Math.floor(itemsWidth / (baseWidth + 2 * margin)) - 2 * margin;
+                document.getElementById("toChange").innerHTML = ".card{width:" + cardWidth + "px;}";
+            }
+
+            function toggle(t) {
+                $(t).parent().next().toggleClass("zero-height");
+                $(t).children().first().toggleClass("fa-minus-square");
+                $(t).children().first().toggleClass("fa-plus-square");
+            }
+
+            function getAnimeLinks(t) {
+                if (t.getAttribute('loaded') == "false") {
+                    $.post("{% url 'MoeList:kwikLinkFromSession' %}", {
+                        anilist_id: t.getAttribute('anilist_id'),
+                        ep: t.getAttribute('ep'),
+                        anime_id: t.getAttribute('anime-id'),
+                        session: t.getAttribute('session')
+                    }, function (data, status) {
+                        t.parentElement.children[1].innerHTML = data;
+                        t.setAttribute('loaded', 'true');
+                        $(t).dropdown("toggle").dropdown("toggle");
+                    });
+                }
+            }
+
+            var going_to_fix_layout = false;
+            function fixLayout() {
+                if (going_to_fix_layout == false) {
+                    setTimeout(function () {
+                        $grid.masonry();
+                        going_to_fix_layout = false;
+                    }, 300);
+                    going_to_fix_layout = true;
+                }
+            }
+
+            function checkAiringEps() {
+                $('.spinner').each(function () {
+                    var el = $(this);
+                    el.show();
+                    $.get("{% url 'MoeList:animeDownloadableEp' 1234567898 %}".replace('1234567898', $(this).attr('anilist_id')), function (data, status) {
+                        el.parent().prepend(data);
+                        el.remove();
+                        fixLayout();
+                    });
+                });
+            }
+
+            var nextPages = {{years}};
+
+            $container = $('.container-fluid').infiniteScroll({
+                path: function () {
+                    if (this.loadCount < nextPages.length)
+                        return 'indexPart/' + nextPages[this.loadCount];
+                    else
+                        return undefined;
+                    }
+                ,
+                append: [
+                    '.year-divider', '.items'
+                ],
+                prefill: true,
+                history: false
+            });
+
+            $container.on('append.infiniteScroll', function () {
+                $('.loader-ellips').hide();
+                $('#load_more').show();
+                $grid = $('.items').masonry({itemSelector: '.card', stagger: 30});
+                checkAiringEps();
+            });
+
+            $container.on('request.infiniteScroll', function (event, path) {
+                $('.loader-ellips').show();
+                $('#load_more').hide();
+            });
+
+            $container.on('last.infiniteScroll', function (event, response, path) {
+                $('.loader-ellips').remove();
+                $('#load_more').remove();
+            });
+
+            $(document).ready(checkAiringEps);
+
+            function twoDigit(vlu) {
+                var tempvlu = Number(vlu);
+                if (tempvlu / 10 < 1)
+                    return "0" + tempvlu;
+                else
+                    return tempvlu;
+                }
+
+            function changeDate() {
+                var d = new Date();
+                var n = Math.round(d.getTime() / 1000);
+                $(".animetime").each(function () {
+                    var this_time = this.getAttribute("time") - n;
+                    var time_Text = "";
+                    if (Math.floor(this_time / 604800) > 0)
+                        time_Text += Math.floor(this_time / 604800) + "w ";
+                    if (Math.floor(this_time / 86400 % 7) > 0)
+                        time_Text += Math.floor(this_time / 86400 % 7) + "d ";
+                    time_Text += twoDigit(Math.floor(this_time / 3600 % 24)) + ":";
+                    time_Text += twoDigit(Math.floor(this_time / 60 % 60)) + ":";
+                    time_Text += twoDigit(Math.floor(this_time % 60));
+                    this.innerHTML = time_Text;
+                });
+            }
+
+            window.addEventListener("resize", bodyonresize);
+            setTimeout(bodyonresize, 1000);
+            setInterval(changeDate, 1000);
+            bodyonresize();
+            $grid.masonry();
+        </script>
+    </body>
+</html>

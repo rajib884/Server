@@ -1,0 +1,13 @@
+{% if not episodes.error %}{% for ep in episodes %}
+<div class="dropdown">
+	<div class="btn btn-secondary dropdown-toggle download" data-toggle="dropdown"  onclick="getAnimeLinks(this);" loaded="false" ep="{{ ep.episode }}" anilist_id="{{ anilist_id }}" session="{{ ep.session }}" anime-id="{{ ep.anime_id }}">
+		<span class="ep">{{ ep.episode }}</span>
+	</div>
+	<div class="dropdown-menu d-d">
+		<div class="spinner-border text-light"></div>
+	</div>
+</div>
+{% endfor %}
+{% else %}
+<div style="background-color:red!important; font-color:black!important;">{{episodes.error}}</div>
+{% endif %}

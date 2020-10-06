@@ -1,0 +1,13 @@
+{% for ep, ep_data in episodes.items %}<div class="dropdown">
+										<div class="btn btn-secondary dropdown-toggle {% if ep_data.watched %}watched{% else %}new{% endif %} {% if ep_data.path is None %}deleted{% endif %}" data-toggle="dropdown">
+											<span class="ep">{{ ep }}</span>
+										</div>
+										<div class="dropdown-menu d-d">
+											<a class="dropdown-item di-d {% if ep_data.path is None %} disabled {% endif %}" href="{% url 'MoeList:episode' anilist_id ep %}">Open</a>
+											<a class="dropdown-item di-d " onclick='file_handler(this, "toggle", {{ anilist_id }}, {{ ep }})'>{% if ep_data.watched %}New{% else %}Watched{% endif %}</a>
+											<!--<a class="dropdown-item di-d " onclick='file_handler(this, "redownload", {{ anilist_id }}, {{ ep }})'>Redownload</a>-->
+											<a class="dropdown-item di-d {% if ep_data.path is None %} disabled {% endif %}" onclick='file_handler(this, "open", {{ anilist_id }}, {{ ep }})'>Open in Explorer</a>
+											<a class="dropdown-item di-d {% if ep_data.path is None %} disabled {% endif %}" onclick='delete_file(this, {{ anilist_id }})'>Delete</a>
+										</div>
+									</div>
+									{% endfor %}
