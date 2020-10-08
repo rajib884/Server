@@ -1039,6 +1039,265 @@
         "type": "TV",
         "year": 2018
     },
+    "100185": {
+        "animepahe_id": 2805,
+        "banner": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/n100185-MZigRVKiRf6m.jpg",
+        "cover": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b100185-m0ulgiJmAwWt.png",
+        "description": "The third season of <i>Toaru Majutsu no Index</i>.",
+        "downloadableEp": [
+            {
+                "anime_id": 2805,
+                "created_at": "2019-04-05 14:48:03",
+                "episode": 26,
+                "filler": 0,
+                "id": 22476,
+                "session": "6142a3bede168d2ef1ee21c129e24bb7fcc50b7c38778e8c29eed4c1eecc21fe"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-03-29 14:54:31",
+                "episode": 25,
+                "filler": 0,
+                "id": 22126,
+                "session": "f6a33b71ddae2889f8e4f916eeaa80907d22415a9312cf7bfb40eec5b4fdda02"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-03-22 15:04:42",
+                "episode": 24,
+                "filler": 0,
+                "id": 21820,
+                "session": "f4421308681f3ddf0d62c261b8b9b113f3eef041e801eddd17d020f12e457205"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-03-15 14:45:48",
+                "episode": 23,
+                "filler": 0,
+                "id": 21295,
+                "session": "8dff9a829ac49968af2dd07f260a3527265dd8b816aec4bd15be99da291cb06a"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-03-08 15:43:54",
+                "episode": 22,
+                "filler": 0,
+                "id": 20766,
+                "session": "f5f1fc45fa01929339f18e7bcecf2f704eaff04bb5b72786cae70a565a56d3e4"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-03-01 14:47:54",
+                "episode": 21,
+                "filler": 0,
+                "id": 20371,
+                "session": "eafeed2c3f9b67dc30997cdc55cd0de87892c3e524f89b430b1718ce2b442116"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-02-22 14:46:06",
+                "episode": 20,
+                "filler": 0,
+                "id": 19754,
+                "session": "5f7f0d3b0c511ff6e1fbe3d998148c67015c01a549b262414a4be9c937f7186e"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-02-15 14:43:28",
+                "episode": 19,
+                "filler": 0,
+                "id": 18392,
+                "session": "1fd1399c99365b6e8b528f03d301d40abc7ab20629f6be1e1b2f603d3bf1fdad"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-02-08 14:43:28",
+                "episode": 18,
+                "filler": 0,
+                "id": 18056,
+                "session": "f3005d52b96125883a15a5694bcea3ce683f6aaaf7ad9c5f46902415579d9b41"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-02-01 14:57:28",
+                "episode": 17,
+                "filler": 0,
+                "id": 17488,
+                "session": "d6b09f2bed1cd7a2116fee5b270fa5243df788444a621b3341667b80bd352ac0"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-01-25 15:39:18",
+                "episode": 16,
+                "filler": 0,
+                "id": 16249,
+                "session": "6a3cb90a793b1080aa9c1e4cfdaa5005b365219691ce948c30e643774e5bbf1d"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-01-18 14:41:19",
+                "episode": 15,
+                "filler": 0,
+                "id": 15041,
+                "session": "8057010a8b26bb18d0e0ebf6a8714a10248aab24b308177968336b537f7b093b"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2019-01-11 14:48:14",
+                "episode": 14,
+                "filler": 0,
+                "id": 13848,
+                "session": "c6446d4c247cc9f902134a5cf305d7dd4d06e0e3a1df0798eadaaf3be4cea3e6"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-12-28 14:48:31",
+                "episode": 13,
+                "filler": 0,
+                "id": 13011,
+                "session": "cc9c9a5e28452a56eeb6dd2d41e163fd70a33226b7568a6b99ba84bc8c45bbe0"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-12-21 16:04:49",
+                "episode": 12,
+                "filler": 0,
+                "id": 12843,
+                "session": "6c3ab3d6aebe9170b7eaae79889ffb334384678f3e768a7e97b8710400af027c"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-12-14 14:52:05",
+                "episode": 11,
+                "filler": 0,
+                "id": 12290,
+                "session": "72e02cc6d63833a54df2d08d6596ac7bb7a02eea8648e35192dbe42a8f119e67"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-12-07 14:40:45",
+                "episode": 10,
+                "filler": 0,
+                "id": 12080,
+                "session": "70bb1497400745959b6ff94cd2ad2984db235db244a15768deaa326144624282"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-11-30 14:48:49",
+                "episode": 9,
+                "filler": 0,
+                "id": 11962,
+                "session": "2acf9dbf11fca501e36f1e32f2b5b675e86660b871651e904dc36621efa428c3"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-11-25 22:57:43",
+                "episode": 8,
+                "filler": 0,
+                "id": 11822,
+                "session": "ac6f7d8887432faa4e397ba11026d129d5f5d075054db18cc98a051572466626"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-11-17 08:19:11",
+                "episode": 7,
+                "filler": 0,
+                "id": 11239,
+                "session": "3c713d3a3675996290db2602bc9591103bf0e1f20fb5d2e2558c20255a123f95"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-11-09 15:42:51",
+                "episode": 6,
+                "filler": 0,
+                "id": 11045,
+                "session": "0fe253770df718a4c43cc22662c036b9e2d6b8ec9dbbd17dc9a04d8cd61a9cf4"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-11-02 14:49:20",
+                "episode": 5,
+                "filler": 0,
+                "id": 10981,
+                "session": "ce424b9ecbc7881ff6665dc1f84ac4bd4f3ffa41c9e63c0a7d8fe71ad03c7a0f"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-10-26 14:47:12",
+                "episode": 4,
+                "filler": 0,
+                "id": 10909,
+                "session": "d717e24456b6c76d3f1ecb42628299e66062b136714e14900d7e4264401dbfdb"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-10-19 14:49:26",
+                "episode": 3,
+                "filler": 0,
+                "id": 10842,
+                "session": "acc1f25ab88e09bfb5f0eed744aa1132636e85ce1183082310740eb4d42ed3a3"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-10-12 14:41:56",
+                "episode": 2,
+                "filler": 0,
+                "id": 10769,
+                "session": "8f42cf319a9149c1fe6f5cd762f064784a6026cbbc29078c6e0a34e1136c9dfe"
+            },
+            {
+                "anime_id": 2805,
+                "created_at": "2018-10-07 06:52:18",
+                "episode": 1,
+                "filler": 0,
+                "id": 10673,
+                "session": "e6653b94ed8f052fd0bc89fa72367a4e05e5a12bea04a85864efa962761964d5"
+            }
+        ],
+        "episode_list": {},
+        "episodes": 26,
+        "genres": [
+            "Action",
+            "Sci-Fi",
+            "Supernatural"
+        ],
+        "mal": 36432,
+        "nextEp": null,
+        "relations": [
+            {
+                "banner": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/8937-DZRxaTe8K7LI.jpg",
+                "cover": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx8937-u87hjS85dVwQ.jpg",
+                "episodes": 24,
+                "id": 8937,
+                "relationType": "PREQUEL",
+                "season": "FALL",
+                "status": "FINISHED",
+                "title": "Toaru Majutsu no Index II",
+                "type": "TV",
+                "year": 2010
+            },
+            {
+                "banner": null,
+                "cover": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b107692-1PlGnz7Lxs5h.jpg",
+                "episodes": 2,
+                "id": 107692,
+                "relationType": "SIDE_STORY",
+                "season": "WINTER",
+                "status": "FINISHED",
+                "title": "Toaru Majutsu no Index III Specials",
+                "type": "SPECIAL",
+                "year": 2018
+            }
+        ],
+        "season": "FALL",
+        "slug": "toaru-majutsu-no-index-iii",
+        "status": "FINISHED",
+        "title": "Toaru Majutsu no Index III",
+        "titleEn": "A Certain Magical Index III",
+        "titleJp": "\u3068\u3042\u308b\u9b54\u8853\u306e\u7981\u66f8\u76ee\u9332III",
+        "type": "TV",
+        "year": 2018
+    },
     "100240": {
         "animepahe_id": 2480,
         "banner": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/n100240-UuzeDXFw7itH.jpg",
@@ -1651,10 +1910,15 @@
                 "episode": 1,
                 "filler": 0,
                 "id": 45899,
-                "session": "150826613fe5606f4115a0347c9e54619b55722b4cdb56413276eee360cb9122"
+                "session": "501c5770612bd2b4ed7f696956fc3517d1ad78b8fbbbc8d726e4da173e3ff154"
             }
         ],
-        "episode_list": {},
+        "episode_list": {
+            "1": {
+                "path": "G:\\Anime\\made-in-abyss-fukaki-tamashii-no-reimei\\AnimePahe_Made_in_Abyss_Movie_3_-_Fukaki_Tamashii_no_Reimei_-_01_BD_1080p_Asenshi-MTBB.mp4",
+                "watched": false
+            }
+        },
         "episodes": 1,
         "genres": [
             "Adventure",
@@ -16401,7 +16665,109 @@
             },
             "13": {
                 "path": "G:\\Anime\\re-zero-kara-hajimeru-isekai-seikatsu-2nd-season\\AnimePahe_Re_Zero_kara_Hajimeru_Isekai_Seikatsu_2nd_Season_-_13_1080p_HorribleSubs.mp4",
-                "watched": false
+                "watched": true,
+                "watchedPart": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44,
+                    45,
+                    46,
+                    47,
+                    48,
+                    49,
+                    50,
+                    51,
+                    52,
+                    53,
+                    54,
+                    55,
+                    56,
+                    57,
+                    58,
+                    59,
+                    60,
+                    61,
+                    62,
+                    63,
+                    64,
+                    65,
+                    66,
+                    67,
+                    68,
+                    69,
+                    70,
+                    71,
+                    72,
+                    73,
+                    74,
+                    75,
+                    76,
+                    77,
+                    78,
+                    79,
+                    80,
+                    81,
+                    82,
+                    83,
+                    84,
+                    85,
+                    86,
+                    87,
+                    88,
+                    89,
+                    90,
+                    91,
+                    92,
+                    93,
+                    94,
+                    95,
+                    96,
+                    97,
+                    98,
+                    99,
+                    100
+                ]
             },
             "2": {
                 "path": "G:\\Anime\\rezero-kara-hajimeru-isekai-seikatsu-2nd-season\\AnimePahe_Re_Zero_kara_Hajimeru_Isekai_Seikatsu_2nd_Season_-_2_1080p_HorribleSubs.mp4",
@@ -24968,7 +25334,7 @@
                 ]
             },
             "11": {
-                "path": "G:\\Anime\\kakushigoto\\AnimePahe_Kakushigoto_-_11_1080p_HorribleSubs_2.mp4",
+                "path": "G:\\Anime\\kakushigoto\\AnimePahe_Kakushigoto_-_11_1080p_HorribleSubs.mp4",
                 "watched": false
             },
             "12": {
@@ -27177,7 +27543,7 @@
         ],
         "mal": 41084,
         "nextEp": {
-            "airingAt": 1602026655,
+            "airingAt": 1602208951,
             "episode": "1"
         },
         "relations": [
@@ -30049,7 +30415,7 @@
         ],
         "mal": 41514,
         "nextEp": {
-            "airingAt": 1602026655,
+            "airingAt": 1602208951,
             "episode": "1"
         },
         "relations": [
@@ -30088,7 +30454,7 @@
         ],
         "mal": 41567,
         "nextEp": {
-            "airingAt": 1602026656,
+            "airingAt": 1602208952,
             "episode": "1"
         },
         "relations": [
@@ -30775,7 +31141,7 @@
         ],
         "mal": 42203,
         "nextEp": {
-            "airingAt": 1602026657,
+            "airingAt": 1602208953,
             "episode": "1"
         },
         "relations": [
@@ -57748,16 +58114,7 @@
         "banner": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/21-wf37VakJmZqs.jpg",
         "cover": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx21-tXMN3Y20PIL9.jpg",
         "description": "Gol D. Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.<br><br>\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy\u2019s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.<br><br>\n(Source: MyAnimeList)\n<br><br>\n<b>*This includes following special episodes:</b><br>\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)<br>\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)<br>\n- Team Formation! Save Chopper (Episode 542)<br>\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)<br>\n- 20th Anniversary! Special Romance Dawn (Episode 907)",
-        "downloadableEp": [
-            {
-                "anime_id": 4,
-                "created_at": "2020-10-04 03:29:20",
-                "episode": 944,
-                "filler": 0,
-                "id": 45903,
-                "session": "22a527b55558aa382ac3799177a2cbc9de247437ad0fd940c69dbad853e035cd"
-            }
-        ],
+        "downloadableEp": [],
         "episode_list": {
             "1": {
                 "path": null,
@@ -62597,6 +62954,10 @@
             },
             "943": {
                 "path": "G:\\Anime\\one-piece\\AnimePahe_One_Piece_-_943_1080p_HorribleSubs.mp4",
+                "watched": false
+            },
+            "944": {
+                "path": "G:\\Anime\\one-piece\\AnimePahe_One_Piece_-_944_1080p_Erai-raws.mp4",
                 "watched": false
             },
             "95": {
@@ -95715,7 +96076,16 @@
         "banner": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/97940-1URQdQ4U1a0b.jpg",
         "cover": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx97940-bPydLjny8PUw.png",
         "description": "Asta is a young boy who dreams of becoming the greatest mage in the kingdom. Only one problem \u2013 he can't use any magic! Luckily for Asta, he receives the incredibly rare five-leaf clover grimoire that gives him the power of anti-magic. Can someone who can't use magic really become the Wizard King? One thing's for sure \u2013 Asta will never give up!<br><br>\n\n(Source: VIZ Media)",
-        "downloadableEp": [],
+        "downloadableEp": [
+            {
+                "anime_id": 2264,
+                "created_at": "2020-10-06 13:07:05",
+                "episode": 146,
+                "filler": 0,
+                "id": 45913,
+                "session": "6f04725780e2810f764568a66e61b0125f9f4426554f64bb4001594432a05074"
+            }
+        ],
         "episode_list": {
             "1": {
                 "path": null,
@@ -96746,6 +97116,10 @@
                 "path": "G:\\Anime\\black-clover\\AnimePahe_Black_Clover_-_145_1080p_HorribleSubs.mp4",
                 "watched": false
             },
+            "146": {
+                "path": "G:\\Anime\\black-clover\\AnimePahe_Black_Clover_-_146_1080p_Erai-raws.mp4",
+                "watched": false
+            },
             "15": {
                 "path": null,
                 "watched": true
@@ -97128,8 +97502,8 @@
         ],
         "mal": 34572,
         "nextEp": {
-            "airingAt": 1601976300,
-            "episode": 146
+            "airingAt": 1602581100,
+            "episode": 147
         },
         "relations": [
             {

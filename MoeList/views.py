@@ -33,6 +33,10 @@ download_links = DownloadLinks()
 variables = {
     "view": "List",
     "select_random": False,
+    "show_deleted_ep": False,
+    "show_watched_ep": True,
+    "show_new_ep": True,
+    "show_downloadable_ep": True,
     "deleted": None,
     "watched": None,
     "genre": None,
@@ -102,7 +106,7 @@ def update_variables(request, name, value):
         return http404("Name not in variables", request)
 
 
-def update_genre(request, key, value):
+def update_options(request, key, value):
     variables[key] = None if value == "All" else value
     json.dump(variables, open("options.json", "w"), indent=4, sort_keys=True)
     return HttpResponseRedirect(reverse('MoeList:index'))
@@ -111,18 +115,20 @@ def update_genre(request, key, value):
 def import_mal(request):
     # todo: Finish this
     if request.method == 'POST' and request.FILES['myfile']:
-        try:
-            animelist.import_mal(request.FILES['myfile'])
-        except Exception as e:
-            print(e)
-            return http404(str(e))
-        # fs = FileSystemStorage()
-        # filename = fs.save(myfile.name, myfile)
-        # uploaded_file_url = fs.url(filename)
-        # return render(request, 'core/simple_upload.html', {
-        #     'uploaded_file_url': uploaded_file_url
-        # })
-    return HttpResponse(get_template('MoeList/import_mal.html').render({}, request))
+        # animelist.import_mal(request.FILES['myfile'])
+        threading.Thread(target=animelist.import_mal, daemon=True, kwargs={"f": request.FILES['myfile']}).start()
+        context = {
+            "banner": animelist.random_banner,
+            "navbar": variables
+        }
+        return HttpResponse(get_template('MoeList/import_mal.html').render(context, request))
+    elif request.method == 'GET' and 'print' in request.GET:
+        t = ""
+        while len(animelist.to_print) != 0:
+            t += animelist.to_print.pop(0) + "\n"
+        return http200(t)
+    else:
+        return HttpResponseRedirect(reverse('MoeList:settings'))
 
 
 def index(request):
@@ -997,6 +1003,8 @@ def delete_anime(request):
 
 
 def settings(request):
+    if request.POST and 'filename' in request.POST and 'anilist_name' in request.POST:
+        animelist.add_new_title_replace(request.POST['filename'], request.POST['anilist_name'])
     context = {
         "banner": animelist.random_banner,
         "navbar": variables,
@@ -1005,6 +1013,107 @@ def settings(request):
         'folders': animelist.root_folders,
         'exceptions': animelist.exceptions,
         'unrecognized': animelist.unrecognized,
-        'notVideos': animelist.not_videos
+        'notVideos': animelist.not_videos,
+        'download_links': download_links.all_links
     }
     return HttpResponse(get_template('MoeList/settings.html').render(context, request))
+
+
+def settings_handler(request):
+    if request.POST and 'values' in request.POST:
+        values = json.loads(request.POST['values'])
+        # pprint(values)
+        return_data = []
+        for key, value, index in values:
+            if key == "Regex Patterns":
+                old_value = value[0][0]
+                new_value = value[1][0]
+                if old_value is None:
+                    animelist.patterns.append(new_value)
+                    print(f"Regex Pattern {new_value} was added")
+                else:
+                    if old_value in animelist.patterns:
+                        animelist.patterns[animelist.patterns.index(old_value)] = new_value
+                        print(f"Regex Pattern {old_value} was changed to {new_value}")
+                    else:
+                        print(f"Regex Pattern {old_value} was not found")  # todo
+                        return_data.append([index, f"Regex Pattern {old_value} was not found"])  # todo
+            elif key == "Folder":
+                value[0][1] = value[0][1] == "true"
+                value[0][2] = value[0][2] == "true"
+                value[1][1] = value[1][1] == "true"
+                value[1][2] = value[1][2] == "true"
+                old_value = value[0]
+                new_value = value[1]
+                new_value[0] = path.normpath(new_value[0])
+                if not path.exists(new_value[0]):
+                    print(f"{new_value[0]} does not exists, so was ignored")
+                    return_data.append([index, f"{new_value[0]} does not exists, so it was ignored"])
+                else:
+                    if old_value[0] is None:
+                        animelist.root_folders.append(new_value)
+                        print(f"{new_value} was added")
+                    else:
+                        if old_value in animelist.root_folders:
+                            animelist.root_folders[animelist.root_folders.index(old_value)] = new_value
+                            print(f"{old_value} was replaced with {new_value}")
+                        else:
+                            print(f"{old_value} was not found")  # todo
+                            return_data.append([index, f"{old_value} was not found"])  # todo
+            elif key == "Exception File Name":
+                old_key = value[0][0]
+                new_key = value[1][0]
+                old_value = value[0][1:3]
+                new_value = value[1][1:3]
+                try:
+                    int(new_value[0])
+                    int(new_value[1])
+                except ValueError:
+                    print(f"AniList ID and Ep can be only integer type, you provided {new_value} on {new_key}")
+                    return_data.append([index, f"AniList ID and Ep can be only integer type, you provided {new_value} on {new_key}"])
+                else:
+                    if old_key is None:
+                        animelist.exceptions[new_key] = new_value
+                        print(f"{new_key}: {new_value} was added")
+                    else:
+                        if old_key in animelist.exceptions and animelist.exceptions[old_key] == old_value:
+                            del animelist.exceptions[old_key]
+                            animelist.exceptions[new_key] = new_value
+                            print(f"{old_key}: {old_value} was replaced with {new_key}: {new_value}")
+                        else:
+                            print(f"{old_key}: {old_value} was not found.")  # todo
+                            return_data.append([index, f"{old_key}: {old_value} was not found."])  # todo
+            elif key == "Show":
+                t = {
+                    "Deleted Episodes": "show_deleted_ep",
+                    ".deleted": "show_deleted_ep",
+                    "Watched Episodes": "show_watched_ep",
+                    ".watched": "show_watched_ep",
+                    "New Episodes": "show_new_ep",
+                    ".new": "show_new_ep",
+                    "Downloadable Episodes": "show_downloadable_ep",
+                    ".download": "show_downloadable_ep"
+                }
+                if value[1][0] in t:
+                    variables[t[value[1][0]]] = value[1][1] == "true"
+                    print(f"{value[1][0]} is now {value[1][1]}")
+                else:
+                    print(f"{value[1][0]} is not in dict!")
+                    return_data.append([index, f"{value[1][0]} was not found."])  # todo
+            else:
+                print("Key did not match")
+                return_data.append([index, "Key did not match"])
+
+        with open(animelist._regex_patterns_file, "w") as f:
+            f.write(json.dumps(animelist.patterns, indent=4, sort_keys=True))
+        with open(animelist._root_folders_file, "w") as f:
+            f.write(json.dumps(animelist.root_folders, indent=4, sort_keys=True))
+        with open(animelist._name_exceptions_file, "w") as f:
+            f.write(json.dumps(animelist.exceptions, indent=4, sort_keys=True))
+        with open("options.json", "w") as f:
+            f.write(json.dumps(variables, indent=4, sort_keys=True))
+
+        return HttpResponse(json.dumps(return_data, indent=4))
+    else:
+        pprint(request.POST)
+        return HttpResponse("Send key value via POST")

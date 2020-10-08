@@ -14,152 +14,277 @@
 				<img src="{% static banner %}" alt="{{anime.title}} cover" class="cover-helper">
 			</div>
 			{% endif %}
-			
+			<div id="alert_box"></div>
+			<div id="saveDialoge">
+				<button class="btn btn-primary" onclick="undo_all();">Cancle</button>
+				<button class="btn btn-danger" onclick="save();">Save</button>
+			</div>
 			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Regex Patterns</th>
-						</tr>
-					</thead>
-					<tbody>{% for pattern in regexPatterns %}
-						<tr>
-							<td contenteditable>{{pattern}}</td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
+				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem;padding: 0.5rem;">Update database using Myanimelist Export:
+					<form method="post" action="{% url 'MoeList:importMAL' %}" enctype="multipart/form-data" style="margin:0.5rem 0rem;">
+						{% csrf_token %}
+						<input type="file" name="myfile" aria-describedby="myfileHelp" >
+						<button type="submit" class="btn btn-primary">Upload</button>
+						<small id="myfileHelp" class="form-text">File extention must be .xml.gz</small>
+					</form>
+				</div>
+			</div>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th colspan="2">Show</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td oldvalue="Deleted Episodes">Deleted Episodes</td>
+								<td oldvalue="{% if navbar.show_deleted_ep %}true{% else %}false{% endif %}" style="text-align: center;"><input type="checkbox"{%if navbar.show_deleted_ep%} checked{%endif%}></td>
+							</tr>
+							<tr>
+								<td oldvalue="Watched Episodes">Watched Episodes</td>
+								<td oldvalue="{% if navbar.show_watched_ep %}true{% else %}false{% endif %}" style="text-align: center;"><input type="checkbox"{%if navbar.show_watched_ep%} checked{%endif%}></td>
+							</tr>
+							<tr>
+								<td oldvalue="New Episodes">New Episodes</td>
+								<td oldvalue="{% if navbar.show_new_ep %}true{% else %}false{% endif %}" style="text-align: center;"><input type="checkbox"{%if navbar.show_new_ep%} checked{%endif%}></td>
+							</tr>
+							<tr>
+								<td oldvalue="Downloadable Episodes">Downloadable Episodes</td>
+								<td oldvalue="{% if navbar.show_downloadable_ep %}true{% else %}false{% endif %}" style="text-align: center;"><input type="checkbox"{%if navbar.show_downloadable_ep%} checked{%endif%}></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Regex Patterns</th>
+							</tr>
+						</thead>
+						<tbody>{% for pattern in regexPatterns %}
+							<tr>
+								<td oldvalue="{{pattern}}" spellcheck="false" contenteditable>{{pattern}}</td>
+							</tr>{% endfor %}
+							<tr  onclick="addNewRow(this);">
+								<td class="add-row" colspan="3">+</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			
-			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Folder</th>
-							<th>Scan Subfolder</th>
-							<th>Move</th>
-						</tr>
-					</thead>
-					<tbody>{% for folder, include_sub in folders %}
-						<tr>
-							<td>{{folder}}</td>
-							<td style="text-align: center;"><input class="form-check-input" type="checkbox" value=""{%if include_sub%} checked{%endif%}></td>
-							<td style="text-align: center;"><input class="form-check-input" type="checkbox" value="" disabled></td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
-				<button type="button" class="btn btn-primary" onclick="$(this).next().toggle()">Add New</button>
-				<form>
-					<div class="form-group">
-						<label for="filename"></label>
-						<input type="text" class="form-control" id="filename" aria-describedby="FileNameHelp" placeholder="Enter File Name" autocomplete="off" spellcheck="false">
-						<small id="FileNameHelp" class="form-text">We'll never share your email with anyone else.</small>
-					</div>
-					<div class="form-group">
-						<label for="AnimeListName">AnimeList Name</label>
-						<input type="text" class="form-control" id="AnimeListName" aria-describedby="AnimeListHelp" placeholder="Enter AnimeList Name" autocomplete="off" spellcheck="false">
-						<small id="AnimeListHelp" class="form-text">We'll never share your email with anyone else.</small>
-					</div>
-					<button type="submit" class="btn btn-primary">Submit</button>
-				</form>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Folder</th>
+								<th>Scan Subfolder</th>
+								<th>Move</th>
+							</tr>
+						</thead>
+						<tbody>{% for folder, include_sub, move_files in folders %}
+							<tr>
+								<td oldvalue="{{folder}}" spellcheck="false" contenteditable>{{folder}}</td>
+								<td oldvalue="{%if include_sub%}true{%else%}false{%endif%}" style="text-align: center;"><input type="checkbox" value=""{%if include_sub%} checked{%endif%}></td>
+								<td oldvalue="{%if move_files%}true{%else%}false{%endif%}" style="text-align: center;"><input type="checkbox" value=""{%if move_files%} checked{%endif%}></td>
+							</tr>{% endfor %}
+							<tr  onclick="addNewRow(this);">
+								<td class="add-row" colspan="3">+</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			
-			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Exception File Name</th>
-							<th>Anilist ID</th>
-							<th>EP</th>
-						</tr>
-					</thead>
-					<tbody>{% for exception, data in exceptions.items %}
-						<tr>
-							<td>{{exception}}</td>
-							<td style="text-align: center;">{{data.0}}</td>
-							<td style="text-align: center;">{{data.1}}</td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Exception File Name</th>
+								<th>Anilist ID</th>
+								<th>EP</th>
+							</tr>
+						</thead>
+						<tbody>{% for exception, data in exceptions.items %}
+							<tr>
+								<td oldvalue="{{exception}}" spellcheck="false" contenteditable>{{exception}}</td>
+								<td oldvalue="{{data.0}}" style="text-align: center;" spellcheck="false" contenteditable>{{data.0}}</td>
+								<td oldvalue="{{data.1}}" style="text-align: center;" spellcheck="false" contenteditable>{{data.1}}</td>
+							</tr>{% endfor %}
+							<tr  onclick="addNewRow(this);">
+								<td class="add-row" colspan="3">+</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 			
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Replaced</th>
+								<th>With</th>
+							</tr>
+						</thead>
+						<tbody>{% for title, replace in titleReplace.items %}
+							<tr>
+								<td oldvalue="{{title}}">{{title}}</td>
+								<td oldvalue="{{replace}}">{{replace}}</td>
+							</tr>{% endfor %}
+							<!--<tr  onclick="addNewRow(this);">
+								<td class="add-row" colspan="3">+</td>
+							</tr>-->
+						</tbody>
+					</table>
+				</div>
+			</div>
 			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Replaced</th>
-							<th>With</th>
-						</tr>
-					</thead>
-					<tbody>{% for title, replace in titleReplace.items %}
-						<tr>
-							<td>{{title}}</td>
-							<td>{{replace}}</td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
-				<button type="button" class="btn btn-primary" onclick="$(this).next().toggle()">Add New</button>
-				<form>
+				<button id="forScrolling" type="button" class="btn btn-primary" onclick="$(this).next().show(); $(this).hide();" style="margin-bottom: 1rem;">Add New Title Replace</button>
+				<form id="nameReplaceForm" action="#forScrolling" method="post">
+					{% csrf_token %}
 					<div class="form-group">
 						<label for="filename">File Name</label>
-						<input type="text" class="form-control" id="filename" aria-describedby="FileNameHelp" placeholder="Enter File Name" autocomplete="off" spellcheck="false">
-						<small id="FileNameHelp" class="form-text">We'll never share your email with anyone else.</small>
+						<input type="text" name="filename" class="form-control" id="filename" aria-describedby="FileNameHelp" placeholder="Replace" autocomplete="off" spellcheck="false">
+						<small id="FileNameHelp" class="form-text">Enter file name that's going to be replaced.</small>
 					</div>
 					<div class="form-group">
-						<label for="AnimeListName">AnimeList Name</label>
-						<input type="text" class="form-control" id="AnimeListName" aria-describedby="AnimeListHelp" placeholder="Enter AnimeList Name" autocomplete="off" spellcheck="false">
-						<small id="AnimeListHelp" class="form-text">We'll never share your email with anyone else.</small>
+						<label for="AnimeListName">AniList Name</label>
+						<input type="text" name="anilist_name" class="form-control" id="AnimeListName" aria-describedby="AnimeListHelp" placeholder="With" autocomplete="off" spellcheck="false">
+						<small id="AnimeListHelp" class="form-text">Enter AniList name that will replace the file name.</small>
 					</div>
-					<button type="submit" class="btn btn-primary">Submit</button>
+					<button type="reset" class="btn btn-primary" onclick="$(this).parent().hide(); $(this).parent().prev().show();">Cancle</button>
+					<button type="submit" class="btn btn-danger">Submit</button>
 				</form>
 			</div>
-			
-			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Unrecognized</th>
-						</tr>
-					</thead>
-					<tbody>{% for name in unrecognized %}
-						<tr>
-							<td>{{name}}</td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Unrecognized</th>
+							</tr>
+						</thead>
+						<tbody>{% for name in unrecognized %}
+							<tr>
+								<td>{{name}}</td>
+							</tr>{% endfor %}
+						</tbody>
+					</table>
+				</div>
 			</div>
 			
-			<div style="display: grid;place-items: center;">
-				<table class="table table-sm table-dark table-striped">
-					<thead class="thead-light">
-						<tr>
-							<th>Not Video Files</th>
-						</tr>
-					</thead>
-					<tbody>{% for name in notVideos %}
-						<tr>
-							<td>{{name}}</td>
-						</tr>{% endfor %}
-					</tbody>
-				</table>
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Not Video Files</th>
+							</tr>
+						</thead>
+						<tbody>{% for name in notVideos %}
+							<tr>
+								<td>{{name}}</td>
+							</tr>{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			
+			<div class="table-responsive">
+				<div>
+					<table id="download-links" class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th>Link</th>
+								<th>Generated</th>
+							</tr>
+						</thead>
+						<tbody>{% for key, value in  download_links.items %}
+							<tr>
+								<td><a href="{{value.0}}">{{key}}</a></td>
+								<td expire_in="{{value.1}}" ></td>
+							</tr>{% endfor %}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 		<style>
-			table {
-				max-width:70rem;
+			@media(max-width: 500px){
+				body{
+					font-size: 0.8rem;
+				}
 			}
-			thead {
+			.table-responsive {
+				margin-bottom: 1rem;
+				display: grid;
+				place-items: center;
+				overflow-y: hidden;
+			}
+			.table-responsive > div {
+				width: 100%;
+				max-width: 70rem;
+				max-height: 27rem;
+				overflow-y: scroll;
+			}
+			.table {
+				margin-bottom: 0;
+			}
+			.table thead th {
+				border: none;
+			}
+			th {
 				user-select: none;
-			}
-			thead > tr {
+				position: sticky; top: 0;
 				text-align: center;
 			}
-			form {
+			.add-row {
+				text-align: center;
+				background-color: red;
+				position: sticky;
+				bottom: 0;
+			}
+			td {
+				cursor: default;
+			}
+			td[contenteditable] {
+				cursor: text;
+			}
+			td > a {
+				color:#fff;
+			}
+			td > a:hover {
+				color:#fdff86;
+			}
+			#download-links>tbody>tr>td:nth-child(2) {
+				width: 12rem;
+			}
+			#saveDialoge {
+				text-align: end;
+				position: fixed;
+				bottom: 0;
+				right: 0;
+				padding: 10px;
+				margin-bottom: -4rem;
+				z-index: 1;
+				transition: all 0.3s;
+			}
+			#nameReplaceForm {
 				display: none; 
 				width: 100%;
 				max-width: 60rem;
 				background-color: #0000006b;
 				padding: 1rem 5rem;
-				margin: 1rem;
+				margin: 0rem 1rem 1rem 1rem;
 			}
 			.form-group > label {
 				color: white;
@@ -168,6 +293,43 @@
 			.form-text {
 				color:#ffd3d3;
 			}
+			#alert_box {
+				max-width: clamp(25rem, 50vw, 40rem);
+				//word-break: break-all;
+				position: fixed;
+				right: 1rem;
+				bottom: 0;
+				font-size: 16px;
+			}
+			.alert {				
+				display: grid;
+				grid-template-columns: auto 1rem;
+			}
+			.alert.alert-dark {
+				margin-bottom: 0.3rem;
+				color: #e6f325;
+				background-color: #242629;
+				border-color: #bbbdb8;
+				padding: 0.5rem 0.5rem;
+			}
+
+			.alert.error-dark {
+				margin-bottom: 0.3rem;
+				color: white;
+				background-color: #000000dd;
+				text-shadow: 0px 0px 6px var(--indigo);
+				border-color: #009688;
+				padding: 0.5rem 0.5rem;
+			}
+
+			button.close {
+				color: #ffffff;
+				text-shadow: none;
+			}
+			button.close:hover {
+				color: red;
+			}
+
 		</style>
 		<script>
 			var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
@@ -182,6 +344,197 @@
 					}
 				}
 			});
+			function show_alert(txt) {
+				var div = document.createElement("div");
+				div.innerText = txt;
+				div.classList.add("alert", "alert-dark");
+				div.setAttribute('role', 'alert');
+
+				var btn = document.createElement("button");
+				btn.classList.add("close");
+				btn.setAttribute('type', 'button');
+				btn.setAttribute('data-dismiss', 'alert');
+				btn.innerHTML = '&times;';
+				div.appendChild(btn);
+
+				$("#alert_box").prepend(div);
+				console.log(txt);
+				setTimeout(function() {
+					div.style.display = "none";
+				}, 5000);
+			}
+
+			function show_error(txt) {
+				var div = document.createElement("div");
+				div.innerText = txt;
+				div.classList.add("alert", "error-dark");
+				div.setAttribute('role', 'alert');
+
+				var btn = document.createElement("button");
+				btn.classList.add("close");
+				btn.setAttribute('type', 'button');
+				btn.setAttribute('data-dismiss', 'alert');
+				btn.innerHTML = '&times;';
+				div.appendChild(btn);
+
+				$("#alert_box").prepend(div);
+				console.log(txt);
+			}
+			
+			function addNewRow(t){
+				var el = $(t).prev().clone();
+				el.children().each(function() {
+					this.setAttribute("oldvalue", "");
+					if (this.children.length == 0){
+						this.innerText = "";
+						this.setAttribute('contenteditable', true);
+					}
+				});
+				el.attr('new', 'true');
+				$(t).parent().append(el);
+				$('#saveDialoge').css("margin-bottom", "0");
+				$(t).parent().append(t);
+			}
+			
+			function undo_all(){
+				$('#saveDialoge').css("margin-bottom", "-4rem");
+				$('tr[new], tr[edited]').each(function(){
+					revert(this);
+				});
+			}
+			function revert(el){
+				if (el.getAttribute('new') == 'true'){ 
+					el.remove();
+				} else {
+					$(el).children().each(function(){
+						if (this.children.length == 0) {
+							this.innerText = this.getAttribute('oldvalue');
+						} else {
+							this.children[0].checked = (this.getAttribute('oldvalue') == "true");
+						}
+					});
+					el.removeAttribute('edited');
+				}
+			}
+			
+			function update_oldvalue(){
+				$('tr[new], tr[edited]').each(function() {
+					if (this.getAttribute('new') == 'true'){
+						this.removeAttribute('new');
+					}
+					$(this).children().each(function(){
+						if (this.children.length == 0) {
+							this.setAttribute('oldvalue', this.innerText);
+						} else {
+							this.setAttribute('oldvalue', this.children[0].checked);
+						}
+					});
+					this.removeAttribute('edited');
+				});
+			}
+			
+			function save(){
+				$('#saveDialoge').css("margin-bottom", "-4rem");
+				var values = [];
+				var elms = $('tr[new], tr[edited]')
+				elms.each(function(index){
+					var key = $(this).parent().prev().children().children()[0].innerText;
+					var oldvalue = [];
+					var newvalue = [];
+					var isNew = (this.getAttribute('new') == 'true');
+					$(this).children().each(function(){
+						if (isNew) oldvalue.push(null);
+						else oldvalue.push(this.getAttribute('oldvalue'));
+						
+						if (this.children.length == 0) {
+							newvalue.push(this.innerText);
+						} else {
+							newvalue.push(this.children[0].checked.toString());
+						}
+					});
+					values.push([key, [oldvalue, newvalue], index]);
+				});
+				console.log(values);
+				$.post("{% url 'MoeList:settingsHandler' %}",
+					{
+						values: JSON.stringify(values)
+					},
+					function(data,status){
+						if(status == "success"){
+							if(data.length == 0){
+								show_alert('Saved Successfully');
+							} else {
+								for(i=0; i<data.length; i++){
+									revert(elms[data[i][0]]);
+									show_error(data[i][1]);
+								}
+							}
+							update_oldvalue();
+						} else {
+							alert("Data: " + data + "\nStatus: " + status);
+						}
+					}, 
+					"json"
+				);
+			}
+			
+			$('tbody').on('input', 'input, [contenteditable]', function() {
+				if (this.tagName == "TD"){
+					var el = this;
+				} else if (this.tagName == "INPUT") {
+					var el = this.parentElement;
+				}
+				el.parentElement.setAttribute('edited', true);
+				$('#saveDialoge').css("margin-bottom", "0");
+				/*var key = $(el).parent().parent().prev().children().children()[0].innerText;
+				var t = el.parentElement.children;
+				var value = [];
+				for (i=0; i<t.length; i++){
+					var oldvalue = t[i].getAttribute('oldvalue');
+					if (t[i].children.length == 0) {
+						var newvalue = t[i].innerText;
+					} else {
+						var newvalue = t[i].children[0].checked.toString();
+					}
+					value.push([oldvalue, newvalue]);
+				}
+				console.log(key, value);*/
+			});
+			
+			$(function(){
+				$("#download-links> tbody").each(function(elem, index){
+				  var arr = $.makeArray($("tr",this).detach());
+				  arr.reverse();
+					$(this).append(arr);
+				});
+			});
+			
+			function twoDigit(vlu) {
+				var tempvlu = Number(vlu);
+				if (tempvlu / 10 < 1)
+					return "0" + tempvlu;
+				else
+					return tempvlu;
+			}
+			function changeDate(){
+				var d = new Date();
+				var n = Math.round(d.getTime()/1000);
+				$("td[expire_in]").each(function(){
+					var this_time = n - this.getAttribute("expire_in");
+					var time_Text = "";
+					if (Math.floor(this_time / 604800) > 0)
+						time_Text += Math.floor(this_time / 604800) + "w ";
+					if (Math.floor(this_time / 86400 % 7) > 0)
+						time_Text += Math.floor(this_time / 86400 % 7) + "d ";
+					time_Text += twoDigit(Math.floor(this_time / 3600 % 24)) + "h ";
+					time_Text += twoDigit(Math.floor(this_time / 60 % 60)) + "min ";
+					//time_Text += twoDigit(Math.floor(this_time % 60));
+					this.innerHTML = time_Text + " ago";
+				});
+			}
+			changeDate();
+			setInterval(changeDate, 1000*60);
+			
 			/*$('thead').click(function() {
 				$(this).next().toggle();
 			});*/

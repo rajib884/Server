@@ -33,6 +33,10 @@
         "None"
     ],
     "select_random": false,
+    "show_deleted_ep": false,
+    "show_downloadable_ep": true,
+    "show_new_ep": true,
+    "show_watched_ep": true,
     "status": null,
     "statuses": [
         "All",

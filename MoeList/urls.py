@@ -11,7 +11,7 @@ urlpatterns = [
     path('<int:anilist_id>/ep/<int:ep>/watchedPart', views.watched_part, name='watched_part'),
     path('watchedAll/<int:anilist_id>/', views.anime_watched_all, name='watched_all'),
     path('reloadInfo/<int:anilist_id>/', views.reload_info, name='reload_info'),
-    path('options/<str:key>/<str:value>', views.update_genre, name='update_options'),
+    path('options/<str:key>/<str:value>', views.update_options, name='update_options'),
     path('search', views.search_pp, name='search'),
     path('ajaxSearch', views.ajax_search, name='ajax_search'),
     path('delete/', views.delete_anime, name='delete'),
@@ -25,4 +25,5 @@ urlpatterns = [
     path('kwikDownload/<str:link>', views.get_download_link_from_kwik, name='kwikDownload'),
     path('importMAL', views.import_mal, name='importMAL'),
     path('settings', views.settings, name='settings'),
+    path('settingsHandler', views.settings_handler, name='settingsHandler'),
 ]

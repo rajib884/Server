@@ -29,7 +29,32 @@
 					<a href="{% url 'MoeList:update_variables' 'select_random' 2 %}">Show All</a>{% else %}
 					<a href="{% url 'MoeList:update_variables' 'select_random' 1 %}">Random</a>{% endif %}
 				</div>
-				<div>{% if navbar.deleted is None %}
+				{% url 'MoeList:settings' as settings_url %}{% if request.get_full_path != settings_url %}<div>
+					<a href="{% url 'MoeList:settings' %}">Settings</a>
+				</div>{% endif %}
+				<div>
+					<span>View:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'view' 'replace'%}'.replace('replace', this.value);">
+					{% for vw in navbar.views %}	<option value="{{vw}}" {% ifequal vw navbar.view %}selected="selected"{% endifequal %}>{{vw}}</option>
+					{% endfor %}</select>
+				</div>
+				<div>
+					<span>Deleted:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_variables' 'deleted' 1234567809%}'.replace('1234567809', this.value);">
+						<option value="0" {% if navbar.deleted is None %}selected="selected"{% endif %}>All</option>
+						<option value="1" {% if navbar.deleted is True%}selected="selected"{% endif %}>Deleted</option>
+						<option value="2" {% if navbar.deleted is False%}selected="selected"{% endif %}>Not Deleted</option>
+					</select>
+				</div>
+				<div>
+					<span>Watched:</span>
+					<select onchange="window.location.href = '{% url 'MoeList:update_variables' 'watched' 1234567809%}'.replace('1234567809', this.value);">
+						<option value="0" {% if navbar.watched is None %}selected="selected"{% endif %}>All</option>
+						<option value="1" {% if navbar.watched is True%}selected="selected"{% endif %}>Watched</option>
+						<option value="2" {% if navbar.watched is False%}selected="selected"{% endif %}>Not Watched</option>
+					</select>
+				</div>
+				<!--<div>{% if navbar.deleted is None %}
 					<a href="{% url 'MoeList:update_variables' 'deleted' 1 %}">Deleted Only</a>{% elif navbar.deleted is True%}
 					<a href="{% url 'MoeList:update_variables' 'deleted' 2 %}">Not Deleted Only</a>
 					<a href="{% url 'MoeList:update_variables' 'deleted' 0 %}"><i class="fas fa-times"></i></a>{% elif navbar.deleted is False%}
@@ -42,13 +67,7 @@
 					<a href="{% url 'MoeList:update_variables' 'watched' 0 %}"><i class="fas fa-times"></i></a>{% elif navbar.watched is False%}
 					<a href="{% url 'MoeList:update_variables' 'watched' 1 %}">Watched Only</a>
 					<a href="{% url 'MoeList:update_variables' 'watched' 0 %}"><i class="fas fa-times"></i></a>{% endif %}
-				</div>
-				<div>
-					<span>View:</span>
-					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'view' 'replace'%}'.replace('replace', this.value);">
-					{% for vw in navbar.views %}	<option value="{{vw}}" {% ifequal vw navbar.view %}selected="selected"{% endifequal %}>{{vw}}</option>
-					{% endfor %}</select>
-				</div>
+				</div>-->
 				<div>
 					<span>Status:</span>
 					<select onchange="window.location.href = '{% url 'MoeList:update_options' 'status' 'replace'%}'.replace('replace', this.value);">
@@ -79,30 +98,30 @@
 					{% for typ in navbar.types %}	<option value="{{typ}}" {% ifequal typ.lower navbar.typ.lower %}selected="selected"{% endifequal %}>{{typ}}</option>
 					{% endfor %}</select>
 				</div>
-				<div>
+				{% if request.get_full_path != settings_url %}<div>
 					<span>Show Deleted Ep</span>
 					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.deleted')">
-						<i class="fas fa-toggle-off"></i>
+						<i class="fas fa-toggle-{% if navbar.show_deleted_ep %}on{% else %}off{% endif %}"></i>
 					</button>
 				</div>
 				<div>
 					<span>Show Watched Ep</span>
 					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.watched')">
-						<i class="fas fa-toggle-on"></i>
+						<i class="fas fa-toggle-{% if navbar.show_watched_ep %}on{% else %}off{% endif %}"></i>
 					</button>
 				</div>
 				<div>
 					<span>Show New Ep</span>
 					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.new')">
-						<i class="fas fa-toggle-on"></i>
+						<i class="fas fa-toggle-{% if navbar.show_new_ep %}on{% else %}off{% endif %}"></i>
 					</button>
 				</div>
 				<div>
 					<span>Show Downloadable Ep</span>
 					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun1(this, '.download')">
-						<i class="fas fa-toggle-on"></i>
+						<i class="fas fa-toggle-{% if navbar.show_downloadable_ep %}on{% else %}off{% endif %}"></i>
 					</button>
-				</div>
+				</div>{% endif %}
 			</div>
 			<script>
 				var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
@@ -146,10 +165,10 @@
 					var style = document.createElement("style");
 					style.appendChild(document.createTextNode("")); // WebKit hack :(
 					document.head.appendChild(style);
-					style.sheet.insertRule(".deleted {display: none!important}");
-					style.sheet.insertRule(".watched {display: inline-block}");
-					style.sheet.insertRule(".new {display: inline-block}");
-					style.sheet.insertRule(".download {display: inline-block}");
+					style.sheet.insertRule(".deleted {display: {% if navbar.show_deleted_ep %}inline-block{% else %}none!important{% endif %}}");
+					style.sheet.insertRule(".watched {display: {% if navbar.show_watched_ep %}inline-block{% else %}none!important{% endif %}}");
+					style.sheet.insertRule(".new {display: {% if navbar.show_new_ep %}inline-block{% else %}none!important{% endif %}}");
+					style.sheet.insertRule(".download {display: {% if navbar.show_downloadable_ep %}inline-block{% else %}none!important{% endif %}}");
 					return style.sheet;
 				})();
 				
@@ -170,6 +189,14 @@
 						sheet.insertRule(selector + "{display: none!important}");
 						t.innerHTML = "<i class='fas fa-toggle-off'></i>";
 					}
+					$.post("{% url 'MoeList:settingsHandler' %}",
+						{
+							values: JSON.stringify([['Show', [null, [selector, hidden.toString()]], 0]])
+						}, 
+						function(data, status){
+							console.log(data);
+						}
+					);
 					try {fixLayout();}
 					catch(err) { console.log('fixLayout is not defined.');}
 				}

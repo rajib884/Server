@@ -1,14 +1,22 @@
 [
     [
         "G:\\Anime",
-        true
+        true,
+        false
     ],
     [
         "G:\\IDM downloads",
-        false
+        false,
+        true
     ],
     [
         "G:\\IDM downloads\\Video",
-        false
+        false,
+        true
+    ],
+    [
+        "E:\\Anime",
+        true,
+        true
     ]
 ]

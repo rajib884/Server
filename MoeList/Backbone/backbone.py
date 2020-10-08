@@ -98,6 +98,10 @@ class DownloadLinks:
         if key in self.downloading_keys:
             self.downloading_keys.pop(self.downloading_keys.index(key))
 
+    @property
+    def all_links(self):
+        return self.data
+
 
 class AniList:
     url = 'https://graphql.anilist.co'
@@ -167,6 +171,7 @@ class FileList:
 
         self.unrecognized = []
         self.not_videos = []
+        self.to_print = []
 
         self.check_interval = 30
         self._thread_running = False
@@ -357,29 +362,41 @@ class FileList:
 
     # import mal
     def import_mal(self, f):
-        # with open(mal_path, "rb") as f:
-        data = xmltodict.parse(gzip.decompress(f.read()).decode())
-
-        for anime in data["myanimelist"]["anime"]:
-            key = self.get_key_by_mal(int(anime['series_animedb_id']))
-            if key is None:
-                print(f"Importing {anime['series_title']}")
-                try:
-                    key = self.mal_to_anilist(int(anime['series_animedb_id']))
-                except KeyError:
-                    print("KeyError")
-                    continue
-                self.update_anilist_data(key)
-                for ep in range(1, int(anime['my_watched_episodes']) + 1):
-                    self.watched(str(key), str(ep))
-                self.save_data()
-                sleep(3)
-            else:
-                if int(self.get_max_watched_ep(key)) < int(anime['my_watched_episodes']):
-                    print(f"{anime['series_title']} Needs Update")
+        self.to_print.append("Importing Myanimelist")
+        print("PP??")
+        try:
+            data = xmltodict.parse(gzip.decompress(f.read()).decode())
+        except Exception as e:
+            print(e)
+            self.to_print.append(str(e))
+        else:
+            for anime in data["myanimelist"]["anime"]:
+                key = self.get_key_by_mal(int(anime['series_animedb_id']))
+                if key is None:
+                    print(f"Importing {anime['series_title']}")
+                    self.to_print.append(f"Importing {anime['series_title']}")
+                    try:
+                        key = self.mal_to_anilist(int(anime['series_animedb_id']))
+                        self.to_print.append(f"\tMAL id {anime['series_animedb_id']} is AniList id {key}")
+                    except KeyError:
+                        print("KeyError")
+                        self.to_print.append("KeyError")
+                        continue
+                    self.update_anilist_data(key)
                     for ep in range(1, int(anime['my_watched_episodes']) + 1):
-                        self.watched(key, str(ep))
-                    self._changed = True
+                        self.watched(str(key), str(ep))
+                    self.save_data()
+                    self.to_print.append(f"\tDatabase updated")
+                    sleep(3)
+                else:
+                    if int(self.get_max_watched_ep(key)) < int(anime['my_watched_episodes']):
+                        print(f"{anime['series_title']} Needs Update")
+                        self.to_print.append(f"Updating {anime['series_title']}")
+                        for ep in range(1, int(anime['my_watched_episodes']) + 1):
+                            self.watched(key, str(ep))
+                        self._changed = True
+                        self.to_print.append(f"\tDatabase updated")
+        self.to_print.append(f"===Importing Finished===")
 
     # Anilist search by name
     def anilist_search(self, name: str, only_airing: bool = False, max_in_1_page: int = 10) -> list:
@@ -929,11 +946,13 @@ class FileList:
     def move_files(self):
         if not self._running_on_pc:
             return
+
+        move_able = tuple(x[0] for x in self.root_folders if x[2] is True)
         for anilist_id, anime in self.data.items():
             for ep_no, ep in anime["episode_list"].items():
                 if ep["path"] is not None:
                     if ":" == ep["path"][1]:
-                        if r"\Anime" != ep["path"][2:8]:
+                        if r"\Anime" != ep["path"][2:8] and ep["path"].startswith(move_able):
                             src = ep["path"]
                             current_drive = ep["path"][0]
                             if exists(src):
@@ -963,7 +982,7 @@ class FileList:
         # except json.decoder.JSONDecodeError:
         #     self.filelist = []
 
-        for root_folder, include_subfolder in self.root_folders:
+        for root_folder, include_subfolder, move_from_here in self.root_folders:
             # if (re.match(self.pc_drive_letters, root_folder) is not None and self.running_on_pc) or (
             #         re.match(self.pc_drive_letters, root_folder) is None and not self.running_on_pc):
             self._scandir(root_folder, include_subfolder)
@@ -1048,7 +1067,7 @@ class FileList:
                                              font="Consolas 14", keep_on_top=True,
                                              icon=r"MoeList\static\MoeList\icon.ico")
                 if folder in (None, ""):
-                    print(self.root_folders)
+                    # print(self.root_folders)
                     if len(self.root_folders) == 0:
                         sg.popup("Select at least one folder.", title="Error",
                                  grab_anywhere=True,
@@ -1062,6 +1081,11 @@ class FileList:
                         "Yes" == sg.popup_yes_no(
                             "If you inlude subfolders then folders in this folders will also be scanned. Else only files in current folders will be scanned and files in subfolders will be excluded.",
                             title="Include subfolders?",
+                            grab_anywhere=True, font="Consolas 14", keep_on_top=True,
+                            icon=r"MoeList\static\MoeList\icon.ico"),
+                        "Yes" == sg.popup_yes_no(
+                            "Do you want to move files from this folder to 'Anime' folder in root of drive? i.e. C:/Anime/one-piece folder?",
+                            title="Move files from here?",
                             grab_anywhere=True, font="Consolas 14", keep_on_top=True,
                             icon=r"MoeList\static\MoeList\icon.ico")
                     ])

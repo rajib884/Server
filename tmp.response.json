@@ -3,14 +3,15 @@
         {
             "720": {
                 "audio": "jpn",
-                "crc32": "52f1533d",
-                "disc": "BD",
-                "fansub": "Dragon-Releases",
-                "filesize": 64334042,
+                "crc32": "19073749",
+                "disc": "",
+                "fansub": "Erai-raws",
+                "filesize": 95250012,
                 "hq": 0,
-                "kwik": "https://kwik.cx/e/xJYTkUcIGTYO",
-                "kwik_adfly": "http://fainbory.com/3oQj",
-                "kwik_shst": "http://festyy.com/wNpoFQ",
+                "id": 84670,
+                "kwik": "https://kwik.cx/e/QYgbtu78Re3p",
+                "kwik_adfly": "http://hideadew.com/5h6e",
+                "kwik_shst": "http://gestyy.com/ee5jCH",
                 "revision": "",
                 "server": "karma"
             }
@@ -18,14 +19,15 @@
         {
             "1080": {
                 "audio": "jpn",
-                "crc32": "56d79cf3",
-                "disc": "BD",
-                "fansub": "Dragon-Releases",
-                "filesize": 106408937,
+                "crc32": "76a8f5c6",
+                "disc": "",
+                "fansub": "Erai-raws",
+                "filesize": 165827173,
                 "hq": 0,
-                "kwik": "https://kwik.cx/e/r6adn5uj6CSH",
-                "kwik_adfly": "http://fainbory.com/3oQo",
-                "kwik_shst": "http://festyy.com/wNpoFH",
+                "id": 84669,
+                "kwik": "https://kwik.cx/e/YRN8im5F0CSy",
+                "kwik_adfly": "http://hideadew.com/5h5w",
+                "kwik_shst": "http://gestyy.com/ee5jCs",
                 "revision": "",
                 "server": "karma"
             }
