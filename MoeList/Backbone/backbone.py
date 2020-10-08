@@ -1103,6 +1103,12 @@ class FileList:
             )
             for url in ("https://chrome.google.com/webstore/detail/privacy-pass/ajhmfdgkijocedmfjonnpjfojldioehi",
                         "https://chrome.google.com/webstore/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm"):
+                if requests.get(url).status_code == 404:
+                    sg.popup(f"{url} returned code 404, try later",
+                             grab_anywhere=True,
+                             font="Consolas 14", keep_on_top=True,
+                             icon=r"MoeList\static\MoeList\icon.ico")
+                    continue
                 browser.get(url)
                 elem = WebDriverWait(browser, 300).until(
                     EC.presence_of_element_located((By.CLASS_NAME, "webstore-test-button-label")))
