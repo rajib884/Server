@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+		<title>{{anime.title}}</title>
         {% include "MoeList/header.html" %}
 	</head>
     <body>
@@ -28,7 +29,7 @@
 		<div class="nav-wrapper">
 			<ul class="nav nav-pills" role="tablist">
 				<li class="nav-item">
-					<a class="nav-link active" data-toggle="pill" href="#summary">Summary</a>
+					<a class="nav-link" data-toggle="pill" href="#summary">Summary</a>
 				</li>
 				<li class="nav-item">
 					<a class="nav-link" data-toggle="pill" href="#relations">Relations</a>
@@ -36,11 +37,14 @@
 				<li class="nav-item">
 					<a class="nav-link" data-toggle="pill" href="#options">Options</a>
 				</li>
+				{% if mal is not None %}{% endif %}<li class="nav-item">
+					<a class="nav-link active" data-toggle="pill" href="#myanimelist">MyAnimeList</a>
+				</li>
 			</ul>
 		</div>
 		<div class="anime-content">
 			<div class="bg tab-content">
-				<div id="summary" class="tab-pane anime-detail anime-3244 row active">
+				<div id="summary" class="tab-pane anime-detail anime-3244 row">
 					<div class="col-sm-8 anime-summary">
 						<div class="anime-synopsis" style="max-height: 265px;">{{ anime.description|safe }}</div>
 						<div id="synopsis-read-more" style="display:none;" class="synopsis-read-more" onclick="$(this).prev().css('max-height', ''); $(this).hide()"><p class="mx-auto">Read More</p></div>
@@ -48,6 +52,8 @@
 					<div class="col-sm-4 anime-info">
 						{% if anime.nextEp is not None %}<p><strong>Next Ep: </strong> Ep {{anime.nextEp.episode}} in <span time="{{anime.nextEp.airingAt}}" class="animetime"></span></p>{% endif %}
 						<p><strong>Synonyms: </strong> {{anime.titleEn}}</p>
+						{% if mal_scores.0 is not None %}<p><strong>MAL Score: </strong> {{mal_scores.0}}</p>{% endif %}
+						{% if mal_scores.1 is not None %}<p><strong>Your Score: </strong> {{mal_scores.1}}</p>{% endif %}
 						<p><strong>Type:</strong> <a href="{% url 'MoeList:update_options' 'typ' anime.type%}" title="{{anime.type}}"> {{anime.type}}</a></p>
 						<p><strong>Episode:</strong>{% if anime.episodes is not None %}{{anime.episodes}}{% else %} ?? {% endif %}</p>
 						<p><strong>Status:</strong><a href="{% url 'MoeList:update_options' 'status' anime.status %}" title={{anime.status}}"> {{anime.status}}</a></p>
@@ -90,6 +96,41 @@
 					<a class="btn" href="{% url 'MoeList:reload_info' anilist_id %}" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Reload info</a>
 					<a class="btn" onclick="download_all();" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Downlo0ad</a>
 				</div>
+				<div id="myanimelist" class="tab-pane anime-options row  active">
+					<div class="col-sm anime-info">
+						<select id="status-select" onchange="mal_data_update();">
+							{% if mal.my_list_status.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
+							<option value="watching" {% if mal.my_list_status.status == "watching" %}selected="selected"{% endif %}>Watching</option>
+							<option value="completed" {% if mal.my_list_status.status == "completed" %}selected="selected"{% endif %}>Completed</option>
+							<option value="plan_to_watch" {% if mal.my_list_status.status == "plan_to_watch" %}selected="selected"{% endif %}>Plan to Watch</option>
+							<option value="on_hold" {% if mal.my_list_status.status == "on_hold" %}selected="selected"{% endif %}>On Hold</option>
+							<option value="dropped" {% if mal.my_list_status.status == "dropped" %}selected="selected"{% endif %}>Dropped</option>
+						</select>
+						<select id="score-select" onchange="mal_data_update();">
+							<option value="0" {% if mal.my_list_status.score == 0 or mal.my_list_status.score is None  %}selected="selected"{% endif %}>Select Score</option>
+							<option value="10" {% if mal.my_list_status.score == 10 %}selected="selected"{% endif %}>(10) Masterpiece</option>
+							<option value="9" {% if mal.my_list_status.score == 9 %}selected="selected"{% endif %}>(9) Great</option>
+							<option value="8" {% if mal.my_list_status.score == 8 %}selected="selected"{% endif %}>(8) Very Good</option>
+							<option value="7" {% if mal.my_list_status.score == 7 %}selected="selected"{% endif %}>(7) Good</option>
+							<option value="6" {% if mal.my_list_status.score == 6 %}selected="selected"{% endif %}>(6) Fine</option>
+							<option value="5" {% if mal.my_list_status.score == 5 %}selected="selected"{% endif %}>(5) Average</option>
+							<option value="4" {% if mal.my_list_status.score == 4 %}selected="selected"{% endif %}>(4) Bad</option>
+							<option value="3" {% if mal.my_list_status.score == 3 %}selected="selected"{% endif %}>(3) Very Bad</option>
+							<option value="2" {% if mal.my_list_status.score == 2 %}selected="selected"{% endif %}>(2) Horrible</option>
+							<option value="1" {% if mal.my_list_status.score == 1 %}selected="selected"{% endif %}>(1) Appalling</option>
+						</select>
+						<span style="display: inline-block;">Ep: <input id="ep-select" onchange="mal_data_update();" type="number" min="0"{% if mal.num_episodes != 0 %} max="{{mal.num_episodes}}"{% endif %} value="{{mal.my_list_status.num_episodes_watched|default:0}}">/{{mal.num_episodes}}</span>
+						<p><strong>Duration: </strong> {{mal.average_episode_duration}}</p>
+						<p><strong>Score: </strong> {{mal.mean}} ({{mal.num_scoring_users}} users)</p>
+						<p><strong>Popularity: </strong> {{mal.popularity}}</p>
+						<p><strong>Ranking: </strong> {{mal.rank}}</p>
+						<p><strong>Rating: </strong> {{mal.rating|upper}}</p>
+						<p><strong>Source: </strong> {{mal.source|title}}</p>
+						<p><strong>Members: </strong> {{mal.num_list_users}}</p>
+						<p><strong>Status: </strong> {{mal.status|title}}</p>
+						<p><strong>Studios: </strong> {{mal.studios}}</p>
+					</div>
+				</div>{% if mal is not None %}{% endif %}
 			</div>
 		</div>
 		<div id="anime-delete-modal" class="modal fade">
@@ -148,6 +189,36 @@
 			</div>
 		</div>
 	  </div>
+		<style>
+			#score-select {
+				color: #ffffff;
+				background-color: #00000069;
+				padding: 1px;
+			}
+			#score-select>option {
+				background-color: #000000d1;
+			}
+			#ep-select {
+				color: white;
+				width: 3.5rem;
+				background-color: #00000069;
+				border: 1px solid #767676;
+				padding: 0;
+				text-align: right;
+			}
+			input#ep-select::-webkit-inner-spin-button {
+				//appearance: none;
+			}
+			#status-select {
+				color: white;
+				background-color: #00000069;
+				padding: 1px;
+			}
+
+			#status-select>option {
+				background-color: #000000d1;
+			}
+		</style>
 		<script>
 			/*function getCookie(name) {
 				var cookieValue = null;
@@ -309,7 +380,13 @@
 					}
 				}
 			}
-			
+			 function mal_data_update(){
+				var mal_id = {{mal.id}};
+				if ($('#status-select').children()[0].value == "None") $('#status-select').children()[0].remove();
+				console.log($('#status-select').val())
+				console.log($('#score-select').val())
+				console.log($('#ep-select').val())
+			 }
 			
 			function twoDigit(vlu) {
 				var tempvlu = Number(vlu);

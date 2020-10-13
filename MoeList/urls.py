@@ -24,6 +24,9 @@ urlpatterns = [
     path('kwikLinkFromSession', views.get_kwik_link_from_session, name='kwikLinkFromSession'),
     path('kwikDownload/<str:link>', views.get_download_link_from_kwik, name='kwikDownload'),
     path('importMAL', views.import_mal, name='importMAL'),
+    path('MALHandler', views.mal_handler, name='MALHandler'),
+    path('data', views.data, name='data'),
+    path('dataSummary', views.data_summary, name='dataSummary'),
     path('settings', views.settings, name='settings'),
     path('settingsHandler', views.settings_handler, name='settingsHandler'),
 ]

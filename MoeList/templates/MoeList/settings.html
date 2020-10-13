@@ -2,7 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+		<title>Settings</title>
         {% include "MoeList/header.html" %}
+		<script src="{% static 'MoeList/json-viewer.js' %}"></script>
+		<link rel="stylesheet" href="{% static 'MoeList/json-viewer.css' %}">
 	</head>
     <body style="padding-top: 55px;">
 		<header class="main-header">
@@ -20,14 +23,50 @@
 				<button class="btn btn-danger" onclick="save();">Save</button>
 			</div>
 			<div style="display: grid;place-items: center;">
-				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem;padding: 0.5rem;">Update database using Myanimelist Export:
+				{% if mal_user_data != None %}<span style="background-color: #e9ecef;color: black;width: 100%;text-align: center;max-width: 70rem; margin: 1rem 1rem 0rem 1rem;">MyAnimeList Profile</span>
+				<div style="display: grid;grid-template-columns: auto 1fr 1fr;width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 0rem 1rem 1rem 1rem;padding: 0.5rem;">
+					<img src="{{mal_user_data.picture}}" style="max-height: 6rem;" alt="Myanimelist Profile pic"/>
+					<ul style="margin-bottom: 0;padding-left: 0.5rem;border-left: 8px solid #ffffff20;margin-left: 2rem;">
+						<li>Name: {{mal_user_data.name}}</li>
+						<li>Gender: {{mal_user_data.gender|title}}</li>
+						<li>Location: {{mal_user_data.location}}</li>
+						<li>Birthday: {{mal_user_data.birthday}}</li>
+					</ul>
+					<ul style="margin-bottom: 0;padding-left: 0.5rem;border-left: 8px solid #ffffff20;margin-left: 2rem;">
+						<li>Mean Score: {{mal_user_data.anime_statistics.mean_score}}</li>
+						<li>Episodes: {{mal_user_data.anime_statistics.num_episodes}}</li>
+						<li>Days: {{mal_user_data.anime_statistics.num_days}}</li>
+						<li>Items: {{mal_user_data.anime_statistics.num_items}}</li>
+						<!--<li>Number of days completed: {{mal_user_data.anime_statistics.num_days_completed}}</li>
+						<li>Number of days dropped: {{mal_user_data.anime_statistics.num_days_dropped}}</li>
+						<li>Number of days on_hold: {{mal_user_data.anime_statistics.num_days_on_hold}}</li>
+						<li>Number of days watched: {{mal_user_data.anime_statistics.num_days_watched}}</li>
+						<li>Number of days watching: {{mal_user_data.anime_statistics.num_days_watching}}</li>
+						<li>Number of items completed: {{mal_user_data.anime_statistics.num_items_completed}}</li>
+						<li>Number of items dropped: {{mal_user_data.anime_statistics.num_items_dropped}}</li>
+						<li>Number of items on_hold: {{mal_user_data.anime_statistics.num_items_on_hold}}</li>
+						<li>Number of items plan_to_watch: {{mal_user_data.anime_statistics.num_items_plan_to_watch}}</li>
+						<li>Number of items watching: {{mal_user_data.anime_statistics.num_items_watching}}</li>
+						<li>Number of times rewatched: {{mal_user_data.anime_statistics.num_times_rewatched}}</li>-->
+					</ul>                   
+				</div>{% else %}
+				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem 1rem 0rem 1rem;padding: 0.5rem;"><a href="{{mal}}&redirect_uri={{ request.scheme }}://{{ request.get_host }}{% url 'MoeList:importMAL' %}">Login with MyAnimeList</a></div>
+				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem 1rem 1rem 1rem;padding: 0.5rem;">or, Update database using Myanimelist Export:
 					<form method="post" action="{% url 'MoeList:importMAL' %}" enctype="multipart/form-data" style="margin:0.5rem 0rem;">
 						{% csrf_token %}
 						<input type="file" name="myfile" aria-describedby="myfileHelp" >
 						<button type="submit" class="btn btn-primary">Upload</button>
 						<small id="myfileHelp" class="form-text">File extention must be .xml.gz</small>
 					</form>
-				</div>
+				</div>{% endif %}
+			</div>
+			<div style="display: grid;place-items: center;">
+				<span style="background-color: #e9ecef;color: black;width: 100%;text-align: center;max-width: 70rem;">Local Data</span>
+				<div id="json_data"></div>
+			</div>
+			<div style="display: grid;place-items: center;">
+				<span style="background-color: #e9ecef;color: black;width: 100%;text-align: center;max-width: 70rem;">Local Data Statistics</span>
+				<div id="json_stat"></div>
 			</div>
 			<div class="table-responsive">
 				<div>
@@ -58,6 +97,32 @@
 					</table>
 				</div>
 			</div>
+			
+			<div class="table-responsive">
+				<div>
+					<table class="table table-sm table-dark table-striped">
+						<thead class="thead-light">
+							<tr>
+								<th colspan="2">AnimePahe Offsets</th>
+							</tr>
+							<tr>
+								<td>AniList ID</td>
+								<td>Offset</td>
+							</tr>
+						</thead>
+						<tbody>{% for key, value in animepaheOffsets.items %}
+							<tr>
+								<td oldvalue="{{key}}" spellcheck="false" contenteditable>{{key}}</td>
+								<td oldvalue="{{value}}" spellcheck="false" contenteditable>{{value}}</td>
+							</tr>{% endfor %}
+							<tr  onclick="addNewRow(this);">
+								<td class="add-row" colspan="3">+</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			
 			<div class="table-responsive">
 				<div>
 					<table class="table table-sm table-dark table-striped">
@@ -115,7 +180,7 @@
 						<tbody>{% for exception, data in exceptions.items %}
 							<tr>
 								<td oldvalue="{{exception}}" spellcheck="false" contenteditable>{{exception}}</td>
-								<td oldvalue="{{data.0}}" style="text-align: center;" spellcheck="false" contenteditable>{{data.0}}</td>
+								<td type="number" oldvalue="{{data.0}}" style="text-align: center;" spellcheck="false" contenteditable>{{data.0}}</td>
 								<td oldvalue="{{data.1}}" style="text-align: center;" spellcheck="false" contenteditable>{{data.1}}</td>
 							</tr>{% endfor %}
 							<tr  onclick="addNewRow(this);">
@@ -247,7 +312,13 @@
 				position: sticky; top: 0;
 				text-align: center;
 			}
+			thead>tr:nth-child(2) {
+				background-color: #e9ecef;
+				color: #495057;
+				font-weight: 500;
+			}
 			.add-row {
+				user-select: none;
 				text-align: center;
 				background-color: red;
 				position: sticky;
@@ -328,6 +399,12 @@
 			}
 			button.close:hover {
 				color: red;
+			}
+			#json_data, #json_stat {
+				background-color: #0000006b;
+				margin-bottom: 1rem;
+				width: 100%;
+				max-width: 70rem;
 			}
 
 		</style>
@@ -538,6 +615,13 @@
 			/*$('thead').click(function() {
 				$(this).next().toggle();
 			});*/
+			
+			var jsonViewer1 = new JSONViewer();
+			var jsonViewer2 = new JSONViewer();
+			document.querySelector("#json_data").appendChild(jsonViewer1.getContainer());
+			document.querySelector("#json_stat").appendChild(jsonViewer2.getContainer());
+			$.get("{% url 'MoeList:data' %}", function(data){jsonViewer1.showJSON(data, -1, 0);}, 'json');
+			$.get("{% url 'MoeList:dataSummary' %}", function(data){jsonViewer2.showJSON(data, -1, 1);}, 'json');
 		</script>
 	</body>
 </html>

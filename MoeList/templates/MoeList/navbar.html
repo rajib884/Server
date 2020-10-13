@@ -4,7 +4,7 @@
 					<span class="navbar-toggler-icon" style="color: white; font-size: 26px;"><i class="fas fa-bars"></i></span>
 				</button>
 				<a href="{% url 'MoeList:index'%}" class="navbar-brand">MoeList</a>
-				<div class="options">
+				{% spaceless %}<div class="options">
 					{% if navbar.select_random is True %}<span><i class="fas fa-random"></i></span>{% endif %}
 					{% if navbar.watched is True %}<span>Watched</span>{% endif %}
 					{% if navbar.watched is False %}<span>!Watched</span>{% endif %}
@@ -15,7 +15,7 @@
 					{% if navbar.genre is not None %}<span>{{navbar.genre}}</span>{% endif %}
 					{% if navbar.status is not None %}<span>{{navbar.status}}</span>{% endif %}
 					{% if navbar.typ is not None %}<span>{{navbar.typ}}</span>{% endif %}
-				</div>
+				</div>{% endspaceless %}
 			</nav>
 			<div id="mySidenav" class="sidenav">
 				<form class="search-container" action="{% url 'MoeList:search'%}">

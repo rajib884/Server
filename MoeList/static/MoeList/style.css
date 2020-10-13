@@ -284,7 +284,7 @@ header.anime-header {
     overflow: hidden;
 }
 
-.anime-content .anime-detail .anime-info p {
+.anime-info p {
     margin-bottom: 0rem;
 }
 
@@ -698,6 +698,9 @@ button.delete-info {
     background-color: transparent;
     color: #ff8a97;
     float: right;
+}
+.sidenav > div > select > option {
+    background-color: #262626;
 }
 
 .sidenav a:hover {

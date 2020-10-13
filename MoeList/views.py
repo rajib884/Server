@@ -26,10 +26,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from send2trash import send2trash, TrashPermissionError
 
-from MoeList.Backbone.backbone import FileList, DownloadLinks
+from MoeList.Backbone.backbone import FileList, DownloadLinks, MAL
 
 animelist = FileList()
 download_links = DownloadLinks()
+mal = MAL()
 variables = {
     "view": "List",
     "select_random": False,
@@ -87,6 +88,7 @@ def anime(request, anilist_id):
         'banner': animelist.get_banner(anilist_id),
         'episodes': get_template('MoeList/ep_sorted.html').render(animelist.get_episode_sorted(anilist_id)),
         'relations': animelist.get_relations(anilist_id),
+        'mal': mal.get_anime_info(animelist.data[anilist_id].get('mal')),
         'navbar': variables
     }
     return HttpResponse(get_template('MoeList/anime.html').render(context, request))
@@ -127,9 +129,27 @@ def import_mal(request):
         while len(animelist.to_print) != 0:
             t += animelist.to_print.pop(0) + "\n"
         return http200(t)
+    elif request.method == 'GET' and 'code' in request.GET:
+        if mal.process_code(request.GET['code'], request.build_absolute_uri(reverse('MoeList:importMAL'))):
+            return http200("Success")
+        else:
+            return http200("Failed")
     else:
         return HttpResponseRedirect(reverse('MoeList:settings'))
 
+def mal_handler(request):
+    if request.POST and 'values' in request.POST:
+        pprint(request.POST['values'])
+        return http200("OK??")
+    else:
+        pprint(request.POST)
+        return HttpResponse("Send key value via POST")
+
+def data(request):
+    return http200(animelist.data_json)
+
+def data_summary(request):
+    return http200(animelist.data_summary_json)
 
 def index(request):
     if variables["select_random"] is True:
@@ -613,6 +633,7 @@ def get_kwik_link_from_session(request):
 
 def animepahe_data(anilist_id, find_till=None):
     anilist_id = str(int(anilist_id))
+    offset = animelist.animepahe_offset.get(anilist_id, 0)
     page = 1
     if anilist_id in animelist.data:
         if animelist.data[anilist_id].get("animepahe_id") is not None:
@@ -644,7 +665,7 @@ def animepahe_data(anilist_id, find_till=None):
                 for c in response["data"]:
                     temp["data"].append({
                         'created_at': c['created_at'],
-                        'episode': c['episode'],
+                        'episode': c['episode'] - offset,
                         'filler': c['filler'],
                         'id': c['id'],
                         'session': c['session'],
@@ -679,7 +700,7 @@ def animepahe_data(anilist_id, find_till=None):
                         for c in response["data"]:
                             temp["data"].append({
                                 'created_at': c['created_at'],
-                                'episode': c['episode'],
+                                'episode': c['episode'] - offset,
                                 'filler': c['filler'],
                                 'id': c['id'],
                                 'session': c['session'],
@@ -720,7 +741,7 @@ def get_downloadable_ep(anilist_id: str, force: bool = False, refresh: bool = Fa
                     # print(f"Returned from cache {animelist.data[anilist_id]['title']}")
                     return cache
 
-            print(f"Downloading: {animelist.data[anilist_id]['title']}")
+            print(f"Downloading animepahe data of {animelist.data[anilist_id]['title']}")
             res = animepahe_data(anilist_id, find_till=int(max_ep))
             if "error" in res:
                 return res
@@ -823,13 +844,13 @@ def get_download_link_from_kwik(request, link, idm=False):
             chrome_options=options
         )
         browser.get("chrome://version/")
+        animelist.animepahe_header["User-Agent"] = browser.execute_script("return navigator.userAgent;")
         sleep(2)
         browser.get(link)
         WebDriverWait(browser, 3000).until(EC.title_contains("AnimePahe"))
         # while link == browser.current_url:
         sleep(1)
         ck = browser.get_cookies()
-        animelist.animepahe_header["User-Agent"] = browser.execute_script("return navigator.userAgent;")
         browser.close()
         browser.quit()
         # pickle.dump(ck, open("cookies.pkl", "wb"))
@@ -1014,7 +1035,10 @@ def settings(request):
         'exceptions': animelist.exceptions,
         'unrecognized': animelist.unrecognized,
         'notVideos': animelist.not_videos,
-        'download_links': download_links.all_links
+        'download_links': download_links.all_links,
+        'animepaheOffsets': animelist.animepahe_offset,
+        'mal': mal.link1,
+        'mal_user_data': mal.user_data(),
     }
     return HttpResponse(get_template('MoeList/settings.html').render(context, request))
 
@@ -1100,6 +1124,13 @@ def settings_handler(request):
                 else:
                     print(f"{value[1][0]} is not in dict!")
                     return_data.append([index, f"{value[1][0]} was not found."])  # todo
+            elif key == "AnimePahe Offsets":
+                if value[1][0].isdigit() and value[1][1].isdigit():
+                    animelist.animepahe_offset[str(value[1][0])] = int(value[1][1])
+                    print(f"Anime with AniList ID {value[1][0]} offset set to {value[1][1]}")
+                else:
+                    print(f"{value[1]} is not in digit!")
+                    return_data.append([index, f"{value[1]} can be only digit"])  # todo
             else:
                 print("Key did not match")
                 return_data.append([index, "Key did not match"])
@@ -1110,6 +1141,8 @@ def settings_handler(request):
             f.write(json.dumps(animelist.root_folders, indent=4, sort_keys=True))
         with open(animelist._name_exceptions_file, "w") as f:
             f.write(json.dumps(animelist.exceptions, indent=4, sort_keys=True))
+        with open(animelist._animepahe_offset_file, "w") as f:
+            f.write(json.dumps(animelist.animepahe_offset, indent=4, sort_keys=True))
         with open("options.json", "w") as f:
             f.write(json.dumps(variables, indent=4, sort_keys=True))
 
