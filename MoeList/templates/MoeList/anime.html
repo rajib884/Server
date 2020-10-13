@@ -37,9 +37,9 @@
 				<li class="nav-item">
 					<a class="nav-link" data-toggle="pill" href="#options">Options</a>
 				</li>
-				{% if mal is not None %}{% endif %}<li class="nav-item">
+				{% if mal is not None %}<li class="nav-item">
 					<a class="nav-link active" data-toggle="pill" href="#myanimelist">MyAnimeList</a>
-				</li>
+				</li>{% endif %}
 			</ul>
 		</div>
 		<div class="anime-content">
@@ -96,7 +96,7 @@
 					<a class="btn" href="{% url 'MoeList:reload_info' anilist_id %}" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Reload info</a>
 					<a class="btn" onclick="download_all();" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Downlo0ad</a>
 				</div>
-				<div id="myanimelist" class="tab-pane anime-options row  active">
+				{% if mal is not None %}<div id="myanimelist" class="tab-pane anime-options row  active">
 					<div class="col-sm anime-info">
 						<select id="status-select" onchange="mal_data_update();">
 							{% if mal.my_list_status.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
@@ -130,7 +130,7 @@
 						<p><strong>Status: </strong> {{mal.status|title}}</p>
 						<p><strong>Studios: </strong> {{mal.studios}}</p>
 					</div>
-				</div>{% if mal is not None %}{% endif %}
+				</div>{% endif %}
 			</div>
 		</div>
 		<div id="anime-delete-modal" class="modal fade">
