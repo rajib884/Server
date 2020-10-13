@@ -18,7 +18,8 @@ def main():
         # Run Server
         sys.argv.append("runserver")
         sys.argv.append("--noreload")
-        sys.argv.append("192.168.0.103:8000")
+        # sys.argv.append("192.168.0.103:8000")
+        sys.argv.append("localhost:8000")
 
         # Make migrations
         # sys.argv.append("makemigrations")
