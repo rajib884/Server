@@ -88,7 +88,7 @@ def anime(request, anilist_id):
         'banner': animelist.get_banner(anilist_id),
         'episodes': get_template('MoeList/ep_sorted.html').render(animelist.get_episode_sorted(anilist_id)),
         'relations': animelist.get_relations(anilist_id),
-        'mal': mal.get_anime_info(animelist.data[anilist_id].get('mal')),
+        'mal_id': animelist.data[anilist_id].get('mal'),
         'navbar': variables
     }
     return HttpResponse(get_template('MoeList/anime.html').render(context, request))
@@ -141,6 +141,8 @@ def mal_handler(request):
     if request.POST and 'id' in request.POST:
         pprint(request.POST)
         return http200(json.dumps(mal.update_user_list(request.POST['id'], request.POST['status'], request.POST['ep'], request.POST['score']), indent=4))
+    elif request.GET and 'id' in request.GET:
+        return HttpResponse(get_template('MoeList/mal_part.html').render({'mal': mal.get_anime_info(request.GET['id'])}))
     else:
         pprint(request.POST)
         return HttpResponse("Send key value via POST")

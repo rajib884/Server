@@ -1,0 +1,35 @@
+{%if mal is not None %}<div class="col-sm anime-info" style="background-color: rgba(0, 0, 0, 0.61);padding: 10px;">
+	<select id="status-select" onchange="mal_data_update();">
+		{% if mal.my_list_status.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
+		<option value="watching" {% if mal.my_list_status.status == "watching" %}selected="selected"{% endif %}>Watching</option>
+		<option value="completed" {% if mal.my_list_status.status == "completed" %}selected="selected"{% endif %}>Completed</option>
+		<option value="plan_to_watch" {% if mal.my_list_status.status == "plan_to_watch" %}selected="selected"{% endif %}>Plan to Watch</option>
+		<option value="on_hold" {% if mal.my_list_status.status == "on_hold" %}selected="selected"{% endif %}>On Hold</option>
+		<option value="dropped" {% if mal.my_list_status.status == "dropped" %}selected="selected"{% endif %}>Dropped</option>
+	</select>
+	<select id="score-select" onchange="mal_data_update();">
+		<option value="0" {% if mal.my_list_status.score == 0 or mal.my_list_status.score is None  %}selected="selected"{% endif %}>Select Score</option>
+		<option value="10" {% if mal.my_list_status.score == 10 %}selected="selected"{% endif %}>(10) Masterpiece</option>
+		<option value="9" {% if mal.my_list_status.score == 9 %}selected="selected"{% endif %}>(9) Great</option>
+		<option value="8" {% if mal.my_list_status.score == 8 %}selected="selected"{% endif %}>(8) Very Good</option>
+		<option value="7" {% if mal.my_list_status.score == 7 %}selected="selected"{% endif %}>(7) Good</option>
+		<option value="6" {% if mal.my_list_status.score == 6 %}selected="selected"{% endif %}>(6) Fine</option>
+		<option value="5" {% if mal.my_list_status.score == 5 %}selected="selected"{% endif %}>(5) Average</option>
+		<option value="4" {% if mal.my_list_status.score == 4 %}selected="selected"{% endif %}>(4) Bad</option>
+		<option value="3" {% if mal.my_list_status.score == 3 %}selected="selected"{% endif %}>(3) Very Bad</option>
+		<option value="2" {% if mal.my_list_status.score == 2 %}selected="selected"{% endif %}>(2) Horrible</option>
+		<option value="1" {% if mal.my_list_status.score == 1 %}selected="selected"{% endif %}>(1) Appalling</option>
+	</select>
+	<p style="margin-top: 4px;"><strong>Ep: </strong><input id="ep-select" onchange="mal_data_update();" type="number" min="0"{% if mal.num_episodes != 0 %} max="{{mal.num_episodes}}"{% endif %} value="{{mal.my_list_status.num_episodes_watched|default:0}}">/{{mal.num_episodes}}</p>
+	<p><strong>Duration: </strong> {{mal.average_episode_duration}}</p>
+	<p><strong>Score: </strong> {{mal.mean}} ({{mal.num_scoring_users}} users)</p>
+	<p><strong>Popularity: </strong> {{mal.popularity}}</p>
+	<p><strong>Ranking: </strong> {{mal.rank}}</p>
+	<p><strong>Rating: </strong> {{mal.rating|upper}}</p>
+	<p><strong>Source: </strong> {{mal.source|title}}</p>
+	<p><strong>Members: </strong> {{mal.num_list_users}}</p>
+	<p><strong>Status: </strong> {{mal.status|title}}</p>
+	<p><strong>Studios: </strong> {% for studio in mal.studios %}<span>{{studio.name}}</span>{% endfor %}</p>
+</div>{%else%}
+No Connection or Token Expired
+{%endif%}

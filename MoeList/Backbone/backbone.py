@@ -224,7 +224,9 @@ class MAL:
                 ['end_date', 'mean', 'rank', 'popularity', 'num_scoring_users', 'status', 'num_episodes', 'source',
                  'average_episode_duration', 'rating', 'studios', 'num_list_users', 'my_list_status', ]),
         }
-        t = self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params) or {}
+        t = self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params)
+        if t is None:
+            return t
         t['status'] = t.get('status', 'Unavailable').replace('_', ' ')
         t['rating'] = t.get('rating', 'Unavailable').replace('_', ' ')
         t['average_episode_duration'] = "%d:%02d" % divmod(t.get('average_episode_duration', 0), 60)

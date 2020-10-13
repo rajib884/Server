@@ -37,9 +37,9 @@
 				<li class="nav-item">
 					<a class="nav-link" data-toggle="pill" href="#options">Options</a>
 				</li>
-				{% if mal is not None %}<li class="nav-item">
+				<li class="nav-item">
 					<a class="nav-link active" data-toggle="pill" href="#myanimelist">MyAnimeList</a>
-				</li>{% endif %}
+				</li>
 			</ul>
 		</div>
 		<div class="anime-content">
@@ -96,41 +96,9 @@
 					<a class="btn" href="{% url 'MoeList:reload_info' anilist_id %}" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Reload info</a>
 					<a class="btn" onclick="download_all();" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Downlo0ad</a>
 				</div>
-				{% if mal is not None %}<div id="myanimelist" class="tab-pane anime-options row  active">
-					<div class="col-sm anime-info" style="background-color: rgba(0, 0, 0, 0.61);padding: 10px;">
-						<select id="status-select" onchange="mal_data_update();">
-							{% if mal.my_list_status.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
-							<option value="watching" {% if mal.my_list_status.status == "watching" %}selected="selected"{% endif %}>Watching</option>
-							<option value="completed" {% if mal.my_list_status.status == "completed" %}selected="selected"{% endif %}>Completed</option>
-							<option value="plan_to_watch" {% if mal.my_list_status.status == "plan_to_watch" %}selected="selected"{% endif %}>Plan to Watch</option>
-							<option value="on_hold" {% if mal.my_list_status.status == "on_hold" %}selected="selected"{% endif %}>On Hold</option>
-							<option value="dropped" {% if mal.my_list_status.status == "dropped" %}selected="selected"{% endif %}>Dropped</option>
-						</select>
-						<select id="score-select" onchange="mal_data_update();">
-							<option value="0" {% if mal.my_list_status.score == 0 or mal.my_list_status.score is None  %}selected="selected"{% endif %}>Select Score</option>
-							<option value="10" {% if mal.my_list_status.score == 10 %}selected="selected"{% endif %}>(10) Masterpiece</option>
-							<option value="9" {% if mal.my_list_status.score == 9 %}selected="selected"{% endif %}>(9) Great</option>
-							<option value="8" {% if mal.my_list_status.score == 8 %}selected="selected"{% endif %}>(8) Very Good</option>
-							<option value="7" {% if mal.my_list_status.score == 7 %}selected="selected"{% endif %}>(7) Good</option>
-							<option value="6" {% if mal.my_list_status.score == 6 %}selected="selected"{% endif %}>(6) Fine</option>
-							<option value="5" {% if mal.my_list_status.score == 5 %}selected="selected"{% endif %}>(5) Average</option>
-							<option value="4" {% if mal.my_list_status.score == 4 %}selected="selected"{% endif %}>(4) Bad</option>
-							<option value="3" {% if mal.my_list_status.score == 3 %}selected="selected"{% endif %}>(3) Very Bad</option>
-							<option value="2" {% if mal.my_list_status.score == 2 %}selected="selected"{% endif %}>(2) Horrible</option>
-							<option value="1" {% if mal.my_list_status.score == 1 %}selected="selected"{% endif %}>(1) Appalling</option>
-						</select>
-						<p style="margin-top: 4px;"><strong>Ep: </strong><input id="ep-select" onchange="mal_data_update();" type="number" min="0"{% if mal.num_episodes != 0 %} max="{{mal.num_episodes}}"{% endif %} value="{{mal.my_list_status.num_episodes_watched|default:0}}">/{{mal.num_episodes}}</p>
-						<p><strong>Duration: </strong> {{mal.average_episode_duration}}</p>
-						<p><strong>Score: </strong> {{mal.mean}} ({{mal.num_scoring_users}} users)</p>
-						<p><strong>Popularity: </strong> {{mal.popularity}}</p>
-						<p><strong>Ranking: </strong> {{mal.rank}}</p>
-						<p><strong>Rating: </strong> {{mal.rating|upper}}</p>
-						<p><strong>Source: </strong> {{mal.source|title}}</p>
-						<p><strong>Members: </strong> {{mal.num_list_users}}</p>
-						<p><strong>Status: </strong> {{mal.status|title}}</p>
-						<p><strong>Studios: </strong> {% for studio in mal.studios %}<span>{{studio.name}}</span>{% endfor %}</p>
-					</div>
-				</div>{% endif %}
+				<div id="myanimelist" class="tab-pane anime-options row  active">
+					<div class="lds-hourglass" id="mal-loader"></div>
+				</div>
 			</div>
 		</div>
 		<div id="anime-delete-modal" class="modal fade">
@@ -189,6 +157,7 @@
 			</div>
 		</div>
 	  </div>
+		<div id="loading-anim" class="lds-grid" style="display:none"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
 		<style>
 			#score-select {
 				color: #ffffff;
@@ -217,6 +186,107 @@
 
 			#status-select>option {
 				background-color: #000000d1;
+			}
+			.lds-grid {
+				display: inline-block;
+				position: fixed;
+				bottom: 0;
+				right: 0;
+				z-index: 5;
+				width: 40px;
+				height: 40px;
+			}
+			.lds-grid div {
+				position: absolute;
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #fff;
+				animation: lds-grid 1.2s linear infinite;
+			}
+			.lds-grid div:nth-child(1) {
+				top: 4px;
+				left: 4px;
+				animation-delay: 0s;
+			}
+			.lds-grid div:nth-child(2) {
+				top: 4px;
+				left: 16px;
+				animation-delay: -0.4s;
+			}
+			.lds-grid div:nth-child(3) {
+				top: 4px;
+				left: 28px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(4) {
+				top: 16px;
+				left: 4px;
+				animation-delay: -0.4s;
+			}
+			.lds-grid div:nth-child(5) {
+				top: 16px;
+				left: 16px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(6) {
+				top: 16px;
+				left: 28px;
+				animation-delay: -1.2s;
+			}
+			.lds-grid div:nth-child(7) {
+				top: 28px;
+				left: 4px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(8) {
+				top: 28px;
+				left: 16px;
+				animation-delay: -1.2s;
+			}
+			.lds-grid div:nth-child(9) {
+				top: 28px;
+				left: 28px;
+				animation-delay: -1.6s;
+			}
+			@keyframes lds-grid {
+				0%, 100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.5;
+				}
+			}
+			.lds-hourglass {
+				display: inline-block;
+				position: relative;
+				width: 80px;
+				height: 80px;
+			}
+			.lds-hourglass:after {
+				content: " ";
+				display: block;
+				border-radius: 50%;
+				width: 0;
+				height: 0;
+				margin: 8px;
+				box-sizing: border-box;
+				border: 32px solid #fdd;
+				border-color: #fdd transparent #fdd transparent;
+				animation: lds-hourglass 1.2s infinite;
+			}
+			@keyframes lds-hourglass {
+				0% {
+					transform: rotate(0);
+					animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+				}
+				50% {
+					transform: rotate(900deg);
+					animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+				}
+				100% {
+					transform: rotate(1800deg);
+				}
 			}
 		</style>
 		<script>
@@ -298,6 +368,9 @@
 				$.get("{% url 'MoeList:animeDownloadableEpRefresh' anilist_id %}", function(data, status){
 					$(".episodes").prepend(data);
 					$("#spinner").remove();
+				});
+				$.get("{% url 'MoeList:MALHandler' %}?id={{mal_id}}", function(data, status){
+					$('#myanimelist').html(data);
 				});
 			});
 			function file_handler(t, x, anilist_id, ep){
@@ -381,11 +454,12 @@
 				}
 			}
 			function mal_data_update(){
-				var mal_id = {{mal.id}};
+				var mal_id = {{mal_id}};
 				if ($('#status-select').children()[0].value == "None") $('#status-select').children()[0].remove();
-				console.log($('#status-select').val())
-				console.log($('#score-select').val())
-				console.log($('#ep-select').val())
+				$("#status-select").attr('disabled', 'disabled')
+				$("#score-select").attr('disabled', 'disabled')
+				$("#ep-select").attr('disabled', 'disabled')
+				$("#loading-anim").show();
 				$.post("{% url 'MoeList:MALHandler' %}", 
 				{
 					id: mal_id,
@@ -397,10 +471,15 @@
 					console.log(data);
 					if (data != null){
 						$("#status-select").val(data['status'])
+						$("#status-select").removeAttr('disabled');
 						$("#score-select").val(data['score'])
+						$("#score-select").removeAttr('disabled');
 						$("#ep-select").val(data['num_episodes_watched'])
+						$("#ep-select").removeAttr('disabled');
+						$("#loading-anim").hide();
 					} else {
 						console.log('failed');
+						$("#loading-anim").hide();
 					}
 				},
 				"json");
