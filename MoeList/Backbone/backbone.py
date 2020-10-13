@@ -9,6 +9,7 @@ import re
 import secrets
 import subprocess
 import threading
+from collections import defaultdict
 from json import loads, dumps
 from mimetypes import guess_type
 from os.path import isdir, join, exists, basename, getsize, dirname
@@ -47,12 +48,244 @@ def getfile(filename):
     return response.content
 
 
+def is_int(t):
+    try:
+        int(t)
+        return True
+    except ValueError:
+        return False
+
+
 def cwebp(input_image, output_image, option):
     cmd = r"MoeList\Backbone\cwebp.exe " + option + ' ' + input_image + ' -o ' + output_image
     p = subprocess.Popen(cmd, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     result = {'exit_code': p.returncode, 'stdout': stdout, 'stderr': stderr, 'command': cmd}
     return result
+
+
+class MAL:
+    def __init__(self):
+        self.code_verifier = secrets.token_urlsafe(100)[:128]
+        self._data_file = r"MoeList\data\MAL_data.json"
+        if exists(self._data_file):
+            self.data = json.load(open(self._data_file))
+        else:
+            self.data = {
+                'client_id': "CLIENT ID HERE",
+                'client_secret': "CLIENT SECRET HERE",
+                'refresh_token': "Would be automatically updated",
+                'access_token': "Would be automatically updated",
+                'token_type': "Would be automatically updated",
+            }
+            with open(self._data_file, "w") as f:
+                f.write(json.dumps(self.data, indent=4, sort_keys=True))
+        self.link1 = f'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id={self.data["client_id"]}&code_challenge={self.code_verifier}'
+        # self.search("Made in Abyss Movie 3 - Fukaki Tamashii no Reimei")
+        # pprint(self.get_anime_details(38935))
+        # print(self.get_score(21))
+        # print(self.get_score(38935))
+        # print(self.get_score(389350))
+        # pprint(self.currnet_user_anime_list())
+        # self.update_user_list(41006)
+        # pprint(self.seasonal_anime())
+        # pprint(self.user_data())
+        # exit()
+
+    def save_response(self, response):
+        try:
+            t = response.json()
+        except:
+            print(response.content.decode())
+            return False
+        else:
+            if 'access_token' in t:
+                self.data['access_token'] = t['access_token']
+                self.data['refresh_token'] = t['refresh_token']
+                self.data['token_type'] = t['token_type']
+                with open(self._data_file, "w") as f:
+                    f.write(json.dumps(self._data_file, indent=4, sort_keys=True))
+                return True
+
+    def process_code(self, code, redirect_uri):
+        l = 'https://myanimelist.net/v1/oauth2/token'
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        data = {
+            'client_id': self.data['client_id'],
+            'client_secret': self.data['client_secret'],
+            'grant_type': 'authorization_code',
+            'code': code,
+            'code_verifier': self.code_verifier,
+            'redirect_uri': redirect_uri,
+        }
+        response = requests.post(l, data=data, headers=headers)
+        return self.save_response(response)
+
+    def refresh_access_token(self):
+        print("Refreshing MyAnimeList Access Token")
+        l = 'https://myanimelist.net/v1/oauth2/token'
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        data = {
+            'client_id': self.data['client_id'],
+            'client_secret': self.data['client_secret'],
+            'grant_type': 'refresh_token',
+            'refresh_token': self.data['refresh_token'],
+        }
+        response = requests.post(l, data=data, headers=headers)
+        return self.save_response(response)
+
+    def get(self, link, params=None, headers=None, ):
+        if headers is None:
+            headers = {'Authorization': f'{self.data["token_type"]} {self.data["access_token"]}', }
+        try:
+            response = requests.get(link, headers=headers, params=params)
+        except requests.exceptions.ConnectionError:
+            return None
+        if response.status_code == 401:
+            if self.refresh_access_token():
+                response = requests.get(link, headers=headers, params=params)
+                if response.status_code == 401:
+                    print("Refreshing Access token did not help, Log in again")
+                    return None
+            else:
+                print("Could not refresh Access token, Log in again")
+                return None
+        elif response.status_code == 400:
+            print("Invalid Parameters")
+        elif response.status_code == 403:
+            print("Invalid Token??")
+        return response.json()
+
+    def put(self, link, data=None, params=None, headers=None, ):
+        if headers is None:
+            headers = {'Authorization': f'{self.data["token_type"]} {self.data["access_token"]}', }
+        response = requests.put(link, data=data, headers=headers, params=params)
+        if response.status_code == 401:
+            self.refresh_access_token()
+            response = requests.put(link, data=data, headers=headers, params=params)
+            if response.status_code == 401:
+                print("Refreshing Access token did not help, Log in again")
+                return None
+        elif response.status_code == 400:
+            print("Invalid Parameters")
+        return response.json()
+
+    def user_data(self):
+        params = {'fields': 'anime_statistics'}
+        return self.get('https://api.myanimelist.net/v2/users/@me', params)
+
+    def currnet_user_anime_list(self, user_name='@me', status=None, sort='anime_title', limit=10, offset=0):
+        if status not in ('watching', 'completed', 'on_hold', 'dropped', 'plan_to_watch', None):
+            print(f"Error: {status} is not valid status")
+            return None
+        if sort not in ('list_score', 'list_updated_at', 'anime_title', 'anime_start_date', 'anime_id'):
+            print(f"Error: {status} is not valid status")
+            return None
+        params = {
+            'fields': 'list_status',
+            'limit': min(limit, 1000),
+            'offset': offset,
+        }
+        response = self.get(f'https://api.myanimelist.net/v2/users/{user_name}/animelist', params)
+        if limit > 1000 and 'next' in response['paging']:
+            t = self.currnet_user_anime_list(user_name, status, sort, limit - 1000, offset + 1000)
+            response['data'].extend(t['data'])
+            response['paging']['next'] = t['paging']['next']
+        return response
+
+    def search(self, q):
+        params = {
+            'q': q,
+            'limit': '10',
+            'fields': 'id, title, alternative_titles'
+        }
+        response = self.get('https://api.myanimelist.net/v2/anime', params)
+        pprint(response)
+
+    def get_anime_details(self, anime_id):
+        params = {
+            'fields': ','.join(
+                ['title', 'main_picture', 'end_date', 'synopsis', 'mean', 'rank', 'popularity', 'num_list_users',
+                 'num_scoring_users', 'nsfw', 'status', 'num_episodes', 'source', 'average_episode_duration', 'rating',
+                 'studios', 'statistics',
+                 'id', 'alternative_titles', 'background', 'broadcast', 'created_at', 'genres',
+                 'media_type', 'my_list_status', 'pictures', 'recommendations', 'related_anime', 'related_manga',
+                 'start_date', 'start_season', 'updated_at'
+                 ]),
+        }
+        return self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params)
+
+    def get_anime_info(self, anime_id):
+        params = {
+            'fields': ','.join(
+                ['end_date', 'mean', 'rank', 'popularity', 'num_scoring_users', 'status', 'num_episodes', 'source',
+                 'average_episode_duration', 'rating', 'studios', 'num_list_users', 'my_list_status', ]),
+        }
+        t = self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params) or {}
+        t['status'] = t.get('status', 'Unavailable').replace('_', ' ')
+        t['average_episode_duration'] = "%d:%02d" % divmod(t.get('average_episode_duration', 0), 60)
+        pprint(t)
+        return t
+
+    def get_score(self, anime_id):
+        params = {
+            'fields': 'num_scoring_users,mean,my_list_status'
+        }
+        response = self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params)
+        if response is None:
+            return None, None
+        t = response.get('my_list_status', {}).get('score', None)
+        return response.get('mean', None), None if t == 0 else t
+
+    def update_user_list(
+            self,
+            anime_id: Union[str, int],
+            status: str = 'plan_to_watch',
+            num_watched_episodes: int = 0,
+            score: Union[int, None] = None,
+            is_rewatching: Union[bool, None] = None
+    ):
+        if not is_int(anime_id):
+            print(f"Error: {anime_id} is not valid anime id")
+            return None
+        if not is_int(num_watched_episodes):
+            print(f"Error: {num_watched_episodes} must be int (num_watched_episodes)")
+            return None
+        if status not in ('watching', 'completed', 'on_hold', 'dropped', 'plan_to_watch'):
+            print(f"Error: {status} is not valid status")
+            return None
+        data = {
+            'status': status,
+            'score': score,
+            'num_watched_episodes': num_watched_episodes
+        }
+        if score is not None:
+            data['score'] = score
+        if is_rewatching is not None:
+            data['is_rewatching'] = is_rewatching
+
+        response = self.put(f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status", data)
+        print(response)
+
+    def seasonal_anime(self, year: Union[int, str] = '2020', season: str = 'fall', limit: int = 25, offset: int = 0):
+        if not is_int(year):
+            print(f"Error: {year} is not valid year")
+            return None
+        if season not in ('winter', 'spring', 'summer', 'fall'):
+            print(f"Error: {season} is not valid season")
+            return None
+        params = {
+            'sort': 'num_list_users',  # or 'anime_score'
+            'limit': min(limit, 500),
+            'offset': offset,
+            'fields': 'num_list_users, mean, start_season'
+        }
+        response = self.get(f"https://api.myanimelist.net/v2/anime/season/{year}/{season}", params)
+        if limit > 500 and 'next' in response['paging']:
+            t = self.seasonal_anime(year, season, limit - 500, offset + 500)
+            response['data'].extend(t['data'])
+            response['paging']['next'] = t['paging']['next']
+        return response
 
 
 class DownloadLinks:
@@ -155,14 +388,16 @@ class FileList:
         self._title_replace_file = r"MoeList\data\title replace.json"
         self._name_exceptions_file = r"MoeList\data\exceptions.json"
         self._regex_patterns_file = r"MoeList\data\regex_patterns.json"
+        self._animepahe_offset_file = r"MoeList\data\animepahe_offset.json"
         self._animepahe_header_file = r"MoeList\data\animepahe_header.json"
         self._animepahe_data_file = r"MoeList\data\animepahe_data.bz2"
-        self._load_data_from_encrypt()
-        # self._load_data_from_files()
+        # self._load_data_from_encrypt()
+        self._load_data_from_files()
 
         self.patterns = json.load(open(self._regex_patterns_file))
         self.exceptions = json.load(open(self._name_exceptions_file))
         self.root_folders = json.load(open(self._root_folders_file))
+        self.animepahe_offset = json.load(open(self._animepahe_offset_file))
         self.animepahe_header = json.load(open(self._animepahe_header_file))
         try:
             self.check_animepahe_header()
@@ -590,11 +825,11 @@ class FileList:
 
     def update_anilist(self):
         for anilist_id, anime in self.data.items():
-            if anime["status"] in ("RELEASING", "NOT_YET_RELEASED"):
+            if anime["status"] in ("RELEASING", "NOT_YET_RELEASED", None):
                 if anime['nextEp'] is None or anime['nextEp']['airingAt'] - time() < 0:
                     if self.update_anilist_data(anilist_id):
                         print("Updated {} data".format(anime['title']))
-                        if anime['nextEp'] is None and anime["status"] in ("RELEASING", "NOT_YET_RELEASED"):
+                        if anime['nextEp'] is None and anime["status"] in ("RELEASING", "NOT_YET_RELEASED", None):
                             print(
                                 "Next ep is set to air at unknown time. Setting fake data so it is checked 18 hr "
                                 "later again")
@@ -869,12 +1104,14 @@ class FileList:
 
     def check_for_thumbnail(self):
         cwd = os.getcwd()
+        generated = False
         for key in self.data:
             for ep, ep_details in self.data[key]["episode_list"].items():
                 if ep_details["path"] is not None and exists(ep_details["path"]):
                     if not exists(
                             r"MoeList\static\MoeList\thumbnails\{} ep {}.jpeg".format(
                                 self.data[key]['slug'], ep)):
+                        generated = True
                         temp_dir = join(cwd, r"MoeList\static\MoeList\thumbnails\temp")
                         if not exists(temp_dir):
                             os.mkdir(temp_dir)
@@ -900,6 +1137,8 @@ class FileList:
                         for file in os.listdir(temp_dir):
                             os.remove(join(temp_dir, file))
                         print(f"Created {self.data[key]['title']} ep {ep} thumbnail")
+        if generated:
+            print("Thumbnail Generation Finished")
 
     def check_watched_part(self):
         for anilist_id, anime in self.data.items():
@@ -990,10 +1229,10 @@ class FileList:
         self.process_added([file for file in self.filelist if file not in self._old_filelist])
         self._old_filelist = self.filelist
         self.check_data()
-        self.check_for_misc()
-        self.check_watched_part()
         self.move_files()
         self.update_anilist()
+        self.check_for_misc()
+        self.check_watched_part()
         if self._changed:
             self.save_data()
         self.check_for_thumbnail()
@@ -1007,7 +1246,6 @@ class FileList:
             sleep(1.3)
             print("Background Thread Started")
             update_animepahe()
-            # self.import_mal()
             while True:
                 try:
                     self.recheck()
@@ -1126,6 +1364,61 @@ class FileList:
             exit()
         else:
             raise error
+
+    @property
+    def data_json(self):
+        return json.dumps(self.data, sort_keys=True)
+
+    @property
+    def data_summary_json(self):
+        p = {
+            'Anime': defaultdict(int),
+            'Episodes': defaultdict(int),
+            'By Season': {
+                'None': 0,
+                'WINTER': 0,
+                'SPRING': 0,
+                'SUMMER': 0,
+                'FALL': 0,
+            },
+            'By Status': {
+                "None": 0,
+                "FINISHED": 0,
+                "RELEASING": 0,
+                "NOT_YET_RELEASED": 0,
+            },
+            'By Genres': defaultdict(int),
+            'By Type': defaultdict(int),
+            'By Year': defaultdict(int),
+        }
+        for anilist_id, anime in self.data.items():
+            p['By Type'][str(anime['type'])] += 1
+            p['By Year'][str(anime['year'])] += 1
+            p['By Season'][str(anime['season'])] += 1
+            p['By Status'][str(anime['status'])] += 1
+
+            any_ep_deleted = False
+            any_ep_new = False
+            for ep, ep_data in anime['episode_list'].items():
+                p['Episodes']['Total'] += 1
+                if ep_data['path'] is None:
+                    p['Episodes']['Deleted'] += 1
+                    any_ep_deleted = True
+                elif ep_data['watched']:
+                    p['Episodes']['Watched'] += 1
+                else:
+                    p['Episodes']['New'] += 1
+                    any_ep_new = True
+
+            for gnr in anime['genres']:
+                p['By Genres'][gnr] += 1
+
+            p['Anime']['Total'] = len(self.data)
+            if not any_ep_new:
+                p['Anime']['Completely Watched'] += 1
+            if not any_ep_deleted:
+                p['Anime']['Have Full Downloaded'] += 1
+        return json.dumps(p)
 
     # Load data from files
     def _load_data_from_files(self):
@@ -1281,7 +1574,7 @@ class FileList:
                 self.download_image(slugify(self.data[anilist_id]['title']), self.data[anilist_id]['cover'], "cover")
                 path = join(r"MoeList\images", slugify(self.data[anilist_id]['title']) + ".jpg")
                 path_webp = join(r"MoeList\images", slugify(self.data[anilist_id]['title']) + ".webp")
-                return path if exists(join(r"MoeList\static", path)) else path_webp
+                return path # if exists(join(r"MoeList\static", path)) else path_webp
         else:
             return None
 
@@ -1302,7 +1595,7 @@ class FileList:
                     self.download_image(slugify(anime['title']), anime['banner'], "banner")
                     path = join(r"MoeList\banner", slugify(anime['title']) + ".jpg")
                     path_webp = join(r"MoeList\banner", slugify(anime['title']) + ".webp")
-                    return path if exists(path) else path_webp
+                    return path  # if exists(path) else path_webp
             else:
                 return None
         else:
@@ -1338,7 +1631,7 @@ class FileList:
         path = join(r"MoeList\static\MoeList", folder, slug + ".jpg")
         path_webp = join(r"MoeList\static\MoeList", folder, slug + ".webp")
         printed = False
-        if link is not None and not exists(path) and not exists(path_webp):
+        if link is not None and not exists(path):  # and not exists(path_webp):
             print("{} {}".format(slug, image_type), end="")
             try:
                 response = requests.get(link)
@@ -1359,11 +1652,11 @@ class FileList:
                 print(result['stderr'].decode(), end="")
             printed = True
 
-        if exists(path) and exists(path_webp):
-            if getsize(path_webp) <= getsize(path):
-                os.remove(path)
-                print(f", removed {basename(path)}", end="")
-                printed = True
+        # if exists(path) and exists(path_webp):
+        #     if getsize(path_webp) <= getsize(path):
+        #         os.remove(path)
+        #         print(f", removed {basename(path)}", end="")
+        #         printed = True
         if printed:
             print("")
 
