@@ -97,7 +97,7 @@
 					<a class="btn" onclick="download_all();" style="width: 100%; max-width:200px; margin:5px; border: 1px solid red; background-color: black; color: white;">Downlo0ad</a>
 				</div>
 				{% if mal is not None %}<div id="myanimelist" class="tab-pane anime-options row  active">
-					<div class="col-sm anime-info">
+					<div class="col-sm anime-info" style="background-color: rgba(0, 0, 0, 0.61);padding: 10px;">
 						<select id="status-select" onchange="mal_data_update();">
 							{% if mal.my_list_status.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
 							<option value="watching" {% if mal.my_list_status.status == "watching" %}selected="selected"{% endif %}>Watching</option>
@@ -119,7 +119,7 @@
 							<option value="2" {% if mal.my_list_status.score == 2 %}selected="selected"{% endif %}>(2) Horrible</option>
 							<option value="1" {% if mal.my_list_status.score == 1 %}selected="selected"{% endif %}>(1) Appalling</option>
 						</select>
-						<span style="display: inline-block;">Ep: <input id="ep-select" onchange="mal_data_update();" type="number" min="0"{% if mal.num_episodes != 0 %} max="{{mal.num_episodes}}"{% endif %} value="{{mal.my_list_status.num_episodes_watched|default:0}}">/{{mal.num_episodes}}</span>
+						<p style="margin-top: 4px;"><strong>Ep: </strong><input id="ep-select" onchange="mal_data_update();" type="number" min="0"{% if mal.num_episodes != 0 %} max="{{mal.num_episodes}}"{% endif %} value="{{mal.my_list_status.num_episodes_watched|default:0}}">/{{mal.num_episodes}}</p>
 						<p><strong>Duration: </strong> {{mal.average_episode_duration}}</p>
 						<p><strong>Score: </strong> {{mal.mean}} ({{mal.num_scoring_users}} users)</p>
 						<p><strong>Popularity: </strong> {{mal.popularity}}</p>
@@ -128,7 +128,7 @@
 						<p><strong>Source: </strong> {{mal.source|title}}</p>
 						<p><strong>Members: </strong> {{mal.num_list_users}}</p>
 						<p><strong>Status: </strong> {{mal.status|title}}</p>
-						<p><strong>Studios: </strong> {{mal.studios}}</p>
+						<p><strong>Studios: </strong> {% for studio in mal.studios %}<span>{{studio.name}}</span>{% endfor %}</p>
 					</div>
 				</div>{% endif %}
 			</div>
@@ -380,13 +380,31 @@
 					}
 				}
 			}
-			 function mal_data_update(){
+			function mal_data_update(){
 				var mal_id = {{mal.id}};
 				if ($('#status-select').children()[0].value == "None") $('#status-select').children()[0].remove();
 				console.log($('#status-select').val())
 				console.log($('#score-select').val())
 				console.log($('#ep-select').val())
-			 }
+				$.post("{% url 'MoeList:MALHandler' %}", 
+				{
+					id: mal_id,
+					status: $('#status-select').val(),
+					score: $('#score-select').val(),
+					ep: $('#ep-select').val(),
+				},
+				function(data, status) {
+					console.log(data);
+					if (data != null){
+						$("#status-select").val(data['status'])
+						$("#score-select").val(data['score'])
+						$("#ep-select").val(data['num_episodes_watched'])
+					} else {
+						console.log('failed');
+					}
+				},
+				"json");
+			}
 			
 			function twoDigit(vlu) {
 				var tempvlu = Number(vlu);

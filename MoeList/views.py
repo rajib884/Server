@@ -138,9 +138,9 @@ def import_mal(request):
         return HttpResponseRedirect(reverse('MoeList:settings'))
 
 def mal_handler(request):
-    if request.POST and 'values' in request.POST:
-        pprint(request.POST['values'])
-        return http200("OK??")
+    if request.POST and 'id' in request.POST:
+        pprint(request.POST)
+        return http200(json.dumps(mal.update_user_list(request.POST['id'], request.POST['status'], request.POST['ep'], request.POST['score']), indent=4))
     else:
         pprint(request.POST)
         return HttpResponse("Send key value via POST")

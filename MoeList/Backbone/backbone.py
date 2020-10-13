@@ -159,7 +159,10 @@ class MAL:
     def put(self, link, data=None, params=None, headers=None, ):
         if headers is None:
             headers = {'Authorization': f'{self.data["token_type"]} {self.data["access_token"]}', }
-        response = requests.put(link, data=data, headers=headers, params=params)
+        try:
+            response = requests.put(link, data=data, headers=headers, params=params)
+        except requests.exceptions.ConnectionError:
+            return None
         if response.status_code == 401:
             self.refresh_access_token()
             response = requests.put(link, data=data, headers=headers, params=params)
@@ -223,6 +226,7 @@ class MAL:
         }
         t = self.get(f"https://api.myanimelist.net/v2/anime/{anime_id}", params) or {}
         t['status'] = t.get('status', 'Unavailable').replace('_', ' ')
+        t['rating'] = t.get('rating', 'Unavailable').replace('_', ' ')
         t['average_episode_duration'] = "%d:%02d" % divmod(t.get('average_episode_duration', 0), 60)
         pprint(t)
         return t
@@ -264,8 +268,7 @@ class MAL:
         if is_rewatching is not None:
             data['is_rewatching'] = is_rewatching
 
-        response = self.put(f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status", data)
-        print(response)
+        return self.put(f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status", data)
 
     def seasonal_anime(self, year: Union[int, str] = '2020', season: str = 'fall', limit: int = 25, offset: int = 0):
         if not is_int(year):
