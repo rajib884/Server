@@ -1,2 +1,3 @@
+<a class="dropdown-item di-d " onclick='file_handler(this, "toggle", {{ anilist_id }}, {{ ep }})'>Watched</a>
 {% for title, link in link.items %}<a class="dropdown-item di-d" href="{{link}}" onclick="/*window.open(this.href, 'Download', 'width=200,height=200');*/ visited(this);" target="_blank" >{{title}}</a>
 {% endfor %}

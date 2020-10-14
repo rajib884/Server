@@ -604,7 +604,19 @@ def file_handler(request):
                         "text": text,
                         "response": response
                     }, indent=4, sort_keys=True))
-
+                elif ep not in animelist.data[anilist_id]['episode_list'] and method == "toggle" and text == "Watched":
+                    animelist.data[anilist_id]['episode_list'][ep] = {
+                        "path": None,
+                        "watched": True
+                    }
+                    animelist.save_data()
+                    return HttpResponse(json.dumps({
+                        "anilist_id": anilist_id,
+                        "ep": ep,
+                        "method": method,
+                        "text": text,
+                        "response": "New"
+                    }, indent=4, sort_keys=True))
                 else:
                     return http404("Could not find episode", request)
             else:
@@ -675,7 +687,9 @@ def get_kwik_link_from_session(request):
                 request.POST["session"],
                 request.POST["anilist_id"],
                 request.POST["ep"]
-            )
+            ),
+            'anilist_id': request.POST["anilist_id"],
+            'ep': request.POST["ep"],
         }))
     else:
         return http404(f"{', '.join(keys)} not sent!", request)
