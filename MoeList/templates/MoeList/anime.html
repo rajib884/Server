@@ -456,9 +456,9 @@
 			function mal_data_update(){
 				var mal_id = {{mal_id}};
 				if ($('#status-select').children()[0].value == "None") $('#status-select').children()[0].remove();
-				$("#status-select").attr('disabled', 'disabled')
-				$("#score-select").attr('disabled', 'disabled')
-				$("#ep-select").attr('disabled', 'disabled')
+				$("#status-select").attr('disabled', 'disabled');
+				$("#score-select").attr('disabled', 'disabled');
+				$("#ep-select").attr('disabled', 'disabled');
 				$("#loading-anim").show();
 				$.post("{% url 'MoeList:MALHandler' %}", 
 				{
@@ -470,11 +470,11 @@
 				function(data, status) {
 					console.log(data);
 					if (data != null){
-						$("#status-select").val(data['status'])
+						$("#status-select").val(data['status']);
 						$("#status-select").removeAttr('disabled');
-						$("#score-select").val(data['score'])
+						$("#score-select").val(data['score']);
 						$("#score-select").removeAttr('disabled');
-						$("#ep-select").val(data['num_episodes_watched'])
+						$("#ep-select").val(data['num_episodes_watched']);
 						$("#ep-select").removeAttr('disabled');
 						$("#loading-anim").hide();
 					} else {

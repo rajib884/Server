@@ -143,6 +143,54 @@ def mal_handler(request):
         return http200(json.dumps(mal.update_user_list(request.POST['id'], request.POST['status'], request.POST['ep'], request.POST['score']), indent=4))
     elif request.GET and 'id' in request.GET:
         return HttpResponse(get_template('MoeList/mal_part.html').render({'mal': mal.get_anime_info(request.GET['id'])}))
+    elif request.GET and 'user_list' in request.GET:
+        t = {}
+        anilist_ids = list(animelist.data.keys())
+        for p in mal.currnet_user_anime_list(limit=5000).get('data', []):
+            mal_id = p['node']['id']
+            anilist_id = animelist.get_key_by_mal(mal_id)
+            if anilist_id is None:
+                try:
+                    anilist_id = str(animelist.mal_to_anilist(mal_id))
+                except KeyError:
+                    print(f"KeyError with mal id {mal_id}")
+                    continue
+
+            anilist_data = animelist.data.get(anilist_id, None)
+            if anilist_data is None and animelist.update_anilist_data(anilist_id):
+                print(f"Anime with anilist id {anilist_id} was not found, was downloaded")
+                anilist_data = animelist.data.get(anilist_id, {})
+
+            t[anilist_id] = {
+                'title': anilist_data.get('title', 'Unavailable'),
+                'id': mal_id,
+                'status': p['list_status']['status'],
+                'score': p['list_status']['score'],
+                'watched_ep': p['list_status']['num_episodes_watched'],
+                'num_episodes': p['node']['num_episodes'],
+                'local_watched_ep': animelist.get_max_watched_ep(anilist_id),
+                'local_num_episodes': int(animelist.get_max_ep(anilist_id)),
+            }
+            try:
+                anilist_ids.remove(anilist_id)
+            except ValueError:
+                pass
+        for anilist_id in anilist_ids:
+            mal_id = animelist.data[anilist_id].get('mal', None)
+            if mal_id is None and animelist.update_anilist_data(anilist_id):
+                print(f"MAL id of anilist {anilist_id} was not found, was downloaded")
+                mal_id = animelist.data.get('mal', None)
+            t[anilist_id] = {
+                'title': animelist.data[anilist_id]['title'],
+                'id': mal_id,
+                'status': None,
+                'score': 0,
+                'watched_ep': 0,
+                'num_episodes': 0,
+                'local_watched_ep': animelist.get_max_watched_ep(anilist_id),
+                'local_num_episodes': int(animelist.get_max_ep(anilist_id)),
+            }
+        return HttpResponse(get_template('MoeList/mal_data_compare.html').render({'data': t}, request))
     else:
         pprint(request.POST)
         return HttpResponse("Send key value via POST")

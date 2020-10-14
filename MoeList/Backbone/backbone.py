@@ -177,7 +177,7 @@ class MAL:
         params = {'fields': 'anime_statistics'}
         return self.get('https://api.myanimelist.net/v2/users/@me', params)
 
-    def currnet_user_anime_list(self, user_name='@me', status=None, sort='anime_title', limit=10, offset=0):
+    def currnet_user_anime_list(self, user_name='@me', status=None, sort='anime_title', limit=10, offset=0): # todo: status, sort not used!
         if status not in ('watching', 'completed', 'on_hold', 'dropped', 'plan_to_watch', None):
             print(f"Error: {status} is not valid status")
             return None
@@ -185,7 +185,7 @@ class MAL:
             print(f"Error: {status} is not valid status")
             return None
         params = {
-            'fields': 'list_status',
+            'fields': 'list_status,num_episodes',
             'limit': min(limit, 1000),
             'offset': offset,
         }

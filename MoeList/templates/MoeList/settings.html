@@ -29,8 +29,8 @@
 					<ul style="margin-bottom: 0;padding-left: 0.5rem;border-left: 8px solid #ffffff20;margin-left: 2rem;">
 						<li>Name: {{mal_user_data.name}}</li>
 						<li>Gender: {{mal_user_data.gender|title}}</li>
-						<li>Location: {{mal_user_data.location}}</li>
 						<li>Birthday: {{mal_user_data.birthday}}</li>
+						<li>Location: {{mal_user_data.location}}</li>
 					</ul>
 					<ul style="margin-bottom: 0;padding-left: 0.5rem;border-left: 8px solid #ffffff20;margin-left: 2rem;">
 						<li>Mean Score: {{mal_user_data.anime_statistics.mean_score}}</li>
@@ -49,6 +49,9 @@
 						<li>Number of items watching: {{mal_user_data.anime_statistics.num_items_watching}}</li>
 						<li>Number of times rewatched: {{mal_user_data.anime_statistics.num_times_rewatched}}</li>-->
 					</ul>                   
+				</div>
+				<div style="margin: 0rem 1rem 1rem 1rem;padding: 0.5rem;">
+					<a target="_blank" href="{% url 'MoeList:MALHandler' %}?user_list">All Anime from MyAnimeList</a>
 				</div>{% else %}
 				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem 1rem 0rem 1rem;padding: 0.5rem;"><a href="{{mal}}&redirect_uri={{ request.scheme }}://{{ request.get_host }}{% url 'MoeList:importMAL' %}">Login with MyAnimeList</a></div>
 				<div style="width: 100%;color: white;max-width: 70rem;background-color: #0000006b;margin: 1rem 1rem 1rem 1rem;padding: 0.5rem;">or, Update database using Myanimelist Export:

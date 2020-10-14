@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<title>Settings</title>
+        {% include "MoeList/header.html" %}
+		<script src="{% static 'MoeList/json-viewer.js' %}"></script>
+		<link rel="stylesheet" href="{% static 'MoeList/json-viewer.css' %}">
+	</head>
+    <body style="padding-top: 55px;">
+		<header class="main-header">
+			{% include "MoeList/navbar.html" %}
+		</header>
+		<div class="container-fluid">
+			{% if banner %}
+			<div class="anime-cover" style="background-image: url('{% static banner %}');">
+				<img src="{% static banner %}" alt="{{anime.title}} cover" class="cover-helper">
+			</div>
+			{% endif %}
+			<div style="color:white;width:8rem;">
+				<div style="display: flex;place-content: space-between;">
+					<span>Show Same</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun2(this, '.same')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+				<div style="display: flex;place-content: space-between;">
+					<span>Show Larger</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun2(this, '.large')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+				<div style="display: flex;place-content: space-between;">
+					<span>Show Smaller</span>
+					<button style="background-color: transparent;border: none;color:white;float: right;" onclick="customFun2(this, '.less')">
+						<i class="fas fa-toggle-on"></i>
+					</button>
+				</div>
+			</div>
+			<table class="table table-sm table-dark table-striped">
+				<thead class="thead-light">
+					<tr>
+						<th>Anime</th>
+						<th>MAL</th>
+						<th>MAL Status</th>
+						<th>MAL Score</th>
+						<th>MAL Ep</th>
+						<th>Local Ep</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for anilist_id, info in data.items %}<tr mal_id="{{info.id}}" class="{%if info.watched_ep == info.local_watched_ep%}same{%elif info.watched_ep > info.local_watched_ep%}large{%else%}less{%endif%}">
+						<td><a href="{% url 'MoeList:anime' anilist_id%}">{{info.title}}</a></td>
+						<td><a href="https://myanimelist.net/anime/{{info.id}}" target="_blank">MAL</a></td>
+						<td>
+							<select class="status-select" onchange="mal_data_update(this.parentElement.parentElement);">
+								{% if info.status is None %}<option value="None" selected="selected">Select Status</option>{% endif %}
+								<option value="watching" {% if info.status == "watching" %}selected="selected"{% endif %}>Watching</option>
+								<option value="completed" {% if info.status == "completed" %}selected="selected"{% endif %}>Completed</option>
+								<option value="plan_to_watch" {% if info.status == "plan_to_watch" %}selected="selected"{% endif %}>Plan to Watch</option>
+								<option value="on_hold" {% if info.status == "on_hold" %}selected="selected"{% endif %}>On Hold</option>
+								<option value="dropped" {% if info.status == "dropped" %}selected="selected"{% endif %}>Dropped</option>
+							</select>
+						</td>
+						<td>
+							<select class="score-select" onchange="mal_data_update(this.parentElement.parentElement);">
+								<option value="0" {% if info.score == 0 or info.score is None  %}selected="selected"{% endif %}>Select Score</option>
+								<option value="10" {% if info.score == 10 %}selected="selected"{% endif %}>(10) Masterpiece</option>
+								<option value="9" {% if info.score == 9 %}selected="selected"{% endif %}>(9) Great</option>
+								<option value="8" {% if info.score == 8 %}selected="selected"{% endif %}>(8) Very Good</option>
+								<option value="7" {% if info.score == 7 %}selected="selected"{% endif %}>(7) Good</option>
+								<option value="6" {% if info.score == 6 %}selected="selected"{% endif %}>(6) Fine</option>
+								<option value="5" {% if info.score == 5 %}selected="selected"{% endif %}>(5) Average</option>
+								<option value="4" {% if info.score == 4 %}selected="selected"{% endif %}>(4) Bad</option>
+								<option value="3" {% if info.score == 3 %}selected="selected"{% endif %}>(3) Very Bad</option>
+								<option value="2" {% if info.score == 2 %}selected="selected"{% endif %}>(2) Horrible</option>
+								<option value="1" {% if info.score == 1 %}selected="selected"{% endif %}>(1) Appalling</option>
+							</select>
+						</td>
+						<td><span><input class="ep-select" onchange="mal_data_update(this.parentElement.parentElement.parentElement);" type="number" min="0"{% if info.num_episodes != 0 %} max="{{info.num_episodes}}"{% endif %} value="{{info.watched_ep}}">/{{info.num_episodes}}</span></td>
+						<td>{{info.local_watched_ep}}/{{info.local_num_episodes}}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div id="loading-anim" class="lds-grid" style="display:none"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+		<style>
+			th {
+				user-select: none;
+				position: sticky; top: 0;
+				text-align: center;
+			}
+			td > span {
+				display: flex;
+			}
+			td>a{
+				color:yellow;
+			}
+			tr.same {
+				//background-color: green!important;
+			}
+			tr.less {
+				background-color: red!important;
+			}
+			tr.large {
+				background-color: blue!important;
+			}
+			.score-select {
+				color: #ffffff;
+				background-color: #00000069;
+				padding: 1px;
+			}
+			.score-select>option {
+				background-color: #000000d1;
+			}
+			.ep-select {
+				color: white;
+				width: 3.5rem;
+				background-color: #00000069;
+				border: 1px solid #767676;
+				padding: 0;
+				text-align: right;
+			}
+			input.ep-select::-webkit-inner-spin-button {
+				//appearance: none;
+			}
+			.status-select {
+				color: white;
+				background-color: #00000069;
+				padding: 1px;
+			}
+
+			.status-select>option {
+				background-color: #000000d1;
+			}
+			.lds-grid {
+				display: inline-block;
+				position: fixed;
+				bottom: 0;
+				right: 0;
+				z-index: 5;
+				width: 40px;
+				height: 40px;
+			}
+			.lds-grid div {
+				position: absolute;
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: #fff;
+				animation: lds-grid 1.2s linear infinite;
+			}
+			.lds-grid div:nth-child(1) {
+				top: 4px;
+				left: 4px;
+				animation-delay: 0s;
+			}
+			.lds-grid div:nth-child(2) {
+				top: 4px;
+				left: 16px;
+				animation-delay: -0.4s;
+			}
+			.lds-grid div:nth-child(3) {
+				top: 4px;
+				left: 28px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(4) {
+				top: 16px;
+				left: 4px;
+				animation-delay: -0.4s;
+			}
+			.lds-grid div:nth-child(5) {
+				top: 16px;
+				left: 16px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(6) {
+				top: 16px;
+				left: 28px;
+				animation-delay: -1.2s;
+			}
+			.lds-grid div:nth-child(7) {
+				top: 28px;
+				left: 4px;
+				animation-delay: -0.8s;
+			}
+			.lds-grid div:nth-child(8) {
+				top: 28px;
+				left: 16px;
+				animation-delay: -1.2s;
+			}
+			.lds-grid div:nth-child(9) {
+				top: 28px;
+				left: 28px;
+				animation-delay: -1.6s;
+			}
+			@keyframes lds-grid {
+				0%, 100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.5;
+				}
+			}
+		</style>
+		<script>
+			var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+			function csrfSafeMethod(method) {
+				// these HTTP methods do not require CSRF protection
+				return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+			}
+			$.ajaxSetup({
+				beforeSend: function(xhr, settings) {
+					if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+						xhr.setRequestHeader("X-CSRFToken", csrftoken);
+					}
+				}
+			});
+			
+			//global var sheet is in navbar
+			function customFun2(t, selector) {
+				var l = sheet.cssRules.length;
+				var hidden = false;
+				for(i = 0; i<l; i++){
+					if (sheet.cssRules[i].selectorText == selector) break;
+				}
+				if(i<l) {
+					hidden = sheet.cssRules[i].cssText.includes('none');
+					sheet.deleteRule(i);
+				}
+				if (hidden) {
+					sheet.insertRule(selector + "{display: table-row}");
+					t.innerHTML = "<i class='fas fa-toggle-on'></i>";
+				} else {
+					sheet.insertRule(selector + "{display: none!important}");
+					t.innerHTML = "<i class='fas fa-toggle-off'></i>";
+				}
+			}
+			
+			function mal_data_update(t){
+				var mal_id = $(t).attr('mal_id');
+				var status_el = t.children[2].children[0];
+				var score_el = t.children[3].children[0];
+				var ep_el = t.children[4].children[0].children[0];
+				if (status_el.children[0].value == "None") status_el.children[0].remove();
+				status_el.setAttribute('disabled', 'disabled');
+				score_el.setAttribute('disabled', 'disabled');
+				ep_el.setAttribute('disabled', 'disabled');
+				$("#loading-anim").show();
+				console.log(mal_id);
+				console.log(status_el.value);
+				console.log(score_el.value);
+				console.log(ep_el.value);
+				$.post("{% url 'MoeList:MALHandler' %}", 
+				{
+					id: mal_id,
+					status: status_el.value,
+					score: score_el.value,
+					ep: ep_el.value,
+				},
+				function(data, status) {
+					console.log(data);
+					if (data != null){
+						status_el.value = data['status'];
+						status_el.removeAttribute('disabled');
+						score_el.value = data['score'];
+						score_el.removeAttribute('disabled');
+						ep_el.value = data['num_episodes_watched'];
+						ep_el.removeAttribute('disabled');
+						$("#loading-anim").hide();
+					} else {
+						console.log('failed');
+						$("#loading-anim").hide();
+					}
+				},
+				"json");
+			}
+		</script>
+	</body>
+</html>
