@@ -26,7 +26,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from send2trash import send2trash, TrashPermissionError
 
-from MoeList.Backbone.backbone import FileList, DownloadLinks, MAL
+from MoeList.Backbone.DowonloadLinks import DownloadLinks
+from MoeList.Backbone.backbone import FileList
+from MoeList.Backbone.myanimelist import MAL
 
 animelist = FileList()
 download_links = DownloadLinks()
@@ -137,12 +139,16 @@ def import_mal(request):
     else:
         return HttpResponseRedirect(reverse('MoeList:settings'))
 
+
 def mal_handler(request):
     if request.POST and 'id' in request.POST:
         pprint(request.POST)
-        return http200(json.dumps(mal.update_user_list(request.POST['id'], request.POST['status'], request.POST['ep'], request.POST['score']), indent=4))
+        return http200(json.dumps(
+            mal.update_user_list(request.POST['id'], request.POST['status'], request.POST['ep'], request.POST['score']),
+            indent=4))
     elif request.GET and 'id' in request.GET:
-        return HttpResponse(get_template('MoeList/mal_part.html').render({'mal': mal.get_anime_info(request.GET['id'])}))
+        return HttpResponse(
+            get_template('MoeList/mal_part.html').render({'mal': mal.get_anime_info(request.GET['id'])}))
     elif request.GET and 'user_list' in request.GET:
         t = {}
         anilist_ids = list(animelist.data.keys())
@@ -195,11 +201,14 @@ def mal_handler(request):
         pprint(request.POST)
         return HttpResponse("Send key value via POST")
 
+
 def data(request):
     return http200(animelist.data_json)
 
+
 def data_summary(request):
     return http200(animelist.data_summary_json)
+
 
 def index(request):
     if variables["select_random"] is True:
@@ -1158,7 +1167,8 @@ def settings_handler(request):
                     int(new_value[1])
                 except ValueError:
                     print(f"AniList ID and Ep can be only integer type, you provided {new_value} on {new_key}")
-                    return_data.append([index, f"AniList ID and Ep can be only integer type, you provided {new_value} on {new_key}"])
+                    return_data.append(
+                        [index, f"AniList ID and Ep can be only integer type, you provided {new_value} on {new_key}"])
                 else:
                     if old_key is None:
                         animelist.exceptions[new_key] = new_value
