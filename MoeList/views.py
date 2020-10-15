@@ -5,11 +5,9 @@ import os
 import secrets
 # import random
 import threading
-from json.decoder import JSONDecodeError
 from mimetypes import guess_type
 from os import path, system
 from pprint import pprint
-from re import search
 from subprocess import Popen
 from time import sleep
 from urllib.parse import urlparse, parse_qs
@@ -21,11 +19,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.urls import reverse
 from fuzzywuzzy import process
-from selenium import webdriver
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 from send2trash import send2trash, TrashPermissionError
 
+from MoeList.Backbone import anilist, animepahe
 from MoeList.Backbone.DowonloadLinks import DownloadLinks
 from MoeList.Backbone.backbone import FileList
 from MoeList.Backbone.myanimelist import MAL
@@ -80,8 +76,6 @@ def anime(request, anilist_id):
     anilist_id = str(anilist_id)
     if anilist_id not in animelist.data:
         animelist.update_anilist_data(anilist_id)
-        # animelist.data[anilist_id] = animelist.anilist_get_info(int(anilist_id))
-        # animelist.save_data()
 
     context = {
         'anilist_id': anilist_id,
@@ -152,12 +146,12 @@ def mal_handler(request):
     elif request.GET and 'user_list' in request.GET:
         t = {}
         anilist_ids = list(animelist.data.keys())
-        for p in mal.currnet_user_anime_list(limit=5000).get('data', []):
+        for p in mal.current_user_anime_list(limit=5000).get('data', []):
             mal_id = p['node']['id']
             anilist_id = animelist.get_key_by_mal(mal_id)
             if anilist_id is None:
                 try:
-                    anilist_id = str(animelist.mal_to_anilist(mal_id))
+                    anilist_id = str(anilist.mal_to_anilist(mal_id))
                 except KeyError:
                     print(f"KeyError with mal id {mal_id}")
                     continue
@@ -202,7 +196,7 @@ def mal_handler(request):
         return HttpResponse("Send key value via POST")
 
 
-def data(request):
+def data_json(request):
     return http200(animelist.data_json)
 
 
@@ -593,8 +587,9 @@ def file_handler(request):
                         else:
                             return http404("Set text to 'Watched' or 'New'", request)
 
-                        animelist.data[anilist_id]['episode_list'][ep]['watched'] = w
-                        animelist.save_data()
+                        # animelist.data[anilist_id]['episode_list'][ep]['watched'] = w
+                        animelist.watched(anilist_id, ep, w)
+                        # animelist.save_data()
 
                     elif method == "open":
                         if animelist.data[anilist_id]['episode_list'][ep]['path'] is not None:
@@ -614,11 +609,12 @@ def file_handler(request):
                         "response": response
                     }, indent=4, sort_keys=True))
                 elif ep not in animelist.data[anilist_id]['episode_list'] and method == "toggle" and text == "Watched":
-                    animelist.data[anilist_id]['episode_list'][ep] = {
-                        "path": None,
-                        "watched": True
-                    }
-                    animelist.save_data()
+                    animelist.watched(anilist_id, ep)
+                    # animelist.data[anilist_id]['episode_list'][ep] = {
+                    #     "path": None,
+                    #     "watched": True
+                    # }
+                    # animelist.save_data()
                     return HttpResponse(json.dumps({
                         "anilist_id": anilist_id,
                         "ep": ep,
@@ -632,45 +628,6 @@ def file_handler(request):
                 return http404("Anilist id not correct", request)
         else:
             return http404("Set anilist_id, ep, text and method", request)
-
-
-def get_animepahe_kwik_link(anime_data, session, anilist_id, ep):
-    # todo: use these arguments!
-    # anilist_id = str(int(anilist_id))
-    # ep = str(int(ep))
-    print("Loading kwik links from animepahe..", end="")
-    params = {
-        'm': 'links',
-        'id': anime_data,
-        'session': session,
-        'p': 'kwik',
-    }
-
-    x = requests.get(animelist.animepahe_api_url, headers=animelist.animepahe_header, params=params)
-    try:
-        response = json.loads(x.content)
-    except JSONDecodeError:
-        print(f"Error {x.status_code}\n{x.content}")
-        return {f"Error {x.status_code}": ""}
-    else:
-        print("Loaded")
-        json.dump(response, open("tmp.response.json", "w"), indent=4, sort_keys=True)
-    temp = {}
-    print("Links:")
-    for anime_data in response['data']:
-        for quality, info in anime_data.items():
-            title = "{} {}MB {} {}p {} {}".format(
-                info['disc'],
-                round(info['filesize'] / 1048576),
-                info['fansub'],
-                quality,
-                "HQ" if info['hq'] else "",
-                info["audio"].title()
-            )
-            temp[title] = anime_data[quality]['kwik'].replace("https://kwik.cx/e/", "/MoeList/kwikDownload/")
-
-    pprint(temp)
-    return temp
 
 
 def get_downloadable_ep_http(request, anilist_id):
@@ -691,7 +648,7 @@ def get_kwik_link_from_session(request):
     keys = ["anime_id", "session", "anilist_id", "ep"]
     if all(key in request.POST for key in keys):
         return HttpResponse(get_template('MoeList/ep_new_link.html').render({
-            'link': get_animepahe_kwik_link(
+            'link': animepahe.get_kwik_link(
                 request.POST["anime_id"],
                 request.POST["session"],
                 request.POST["anilist_id"],
@@ -702,89 +659,6 @@ def get_kwik_link_from_session(request):
         }))
     else:
         return http404(f"{', '.join(keys)} not sent!", request)
-
-
-def animepahe_data(anilist_id, find_till=None):
-    anilist_id = str(int(anilist_id))
-    offset = animelist.animepahe_offset.get(anilist_id, 0)
-    page = 1
-    if anilist_id in animelist.data:
-        if animelist.data[anilist_id].get("animepahe_id") is not None:
-            params = {
-                'm': 'release',
-                'id': animelist.data[anilist_id]["animepahe_id"],
-                'l': 30,
-                'sort': 'episode_desc',
-                'page': page,
-            }
-
-            try:
-                x = requests.get(animelist.animepahe_api_url, headers=animelist.animepahe_header, params=params)
-            except requests.exceptions.ConnectionError:
-                return {"error": "Connection Error, Check your connection"}
-            try:
-                response = json.loads(x.content)
-            except JSONDecodeError:
-                print(x.content)
-                return {"error": "json.decoder.JSONDecodeError!!"}
-            temp = {
-                "current_page": response["current_page"],
-                "last_page": response["last_page"],
-                "next_page_url": response["next_page_url"],
-                "total": response["total"],
-                "data": []
-            }
-            if 'data' in response:
-                for c in response["data"]:
-                    temp["data"].append({
-                        'created_at': c['created_at'],
-                        'episode': c['episode'] - offset,
-                        'filler': c['filler'],
-                        'id': c['id'],
-                        'session': c['session'],
-                        'anime_id': animelist.data[anilist_id]["animepahe_id"]
-                    })
-
-            if find_till is None or 'data' not in response:
-                return temp
-            else:
-                min_ep = min([t['episode'] for t in temp['data']])
-                while min_ep > find_till + 1 and temp["next_page_url"] is not None:
-                    page += 1
-                    params = {
-                        'm': 'release',
-                        'id': animelist.data[anilist_id]["animepahe_id"],
-                        'l': 30,
-                        'sort': 'episode_desc',
-                        'page': page,
-                    }
-                    try:
-                        x = requests.get(animelist.animepahe_api_url, headers=animelist.animepahe_header, params=params)
-                        response = json.loads(x.content)
-                    except requests.exceptions.ConnectionError:
-                        return {"error": "Connection Error, Check your connection"}
-                    except JSONDecodeError:
-                        print(x.content)
-                        return {"error": "json.decoder.JSONDecodeError!!"}
-
-                    temp["current_page"] = response["current_page"]
-                    temp["next_page_url"] = response["next_page_url"]
-                    if 'data' in response:
-                        for c in response["data"]:
-                            temp["data"].append({
-                                'created_at': c['created_at'],
-                                'episode': c['episode'] - offset,
-                                'filler': c['filler'],
-                                'id': c['id'],
-                                'session': c['session'],
-                                'anime_id': animelist.data[anilist_id]["animepahe_id"]
-                            })
-                    min_ep = min([t['episode'] for t in temp['data']])
-                return temp
-        else:
-            return {"error": "Anime does not have animepahe id"}
-    else:
-        return {"error": f"Could not find anime with id {anilist_id}"}
 
 
 def get_downloadable_ep(anilist_id: str, force: bool = False, refresh: bool = False):
@@ -815,7 +689,13 @@ def get_downloadable_ep(anilist_id: str, force: bool = False, refresh: bool = Fa
                     return cache
 
             print(f"Downloading animepahe data of {animelist.data[anilist_id]['title']}")
-            res = animepahe_data(anilist_id, find_till=int(max_ep))
+            if animelist.data[anilist_id].get("animepahe_id") is None:
+                return {"error": "Anime does not have animepahe id"}
+            res = animepahe.animepahe_data(
+                animepahe_id=animelist.data[anilist_id].get("animepahe_id"),
+                find_till=int(max_ep),
+                offset=animelist.animepahe_offset.get(anilist_id, 0)
+            )
             if "error" in res:
                 return res
             # pprint(res)
@@ -836,48 +716,7 @@ def get_specific_ep_data(request):
     pass
 
 
-def check_cookie(ck, link="https://kwik.cx/f/4PQFJ0Wofthj"):
-    print("Checking cookie with link {}".format(link), end="")
-    headers = {
-        'User-Agent': animelist.animepahe_header["User-Agent"],
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'TE': 'Trailers',
-    }
-    cookies = {}
-    for cookie in ck:
-        cookies[cookie['name']] = cookie['value']
-    try:
-        response = requests.get(link, headers=headers, cookies=cookies)
-    except requests.exceptions.ConnectionError:
-        print(" ..Connection Error")
-        return None
-    if response.status_code == 200:
-        print(" ..OK")
-        return True
-    else:
-        print(" ..Failed")
-        return False
-
-
 def get_download_link_from_kwik(request, link, idm=False):
-    def decode_encoded_data(encoded_string, key, char_offset, separator):
-        print("Decoding data...")
-        decoded_str = ""
-        for word_from_string in encoded_string.split(key[separator]):
-            for n, char_from_key in enumerate(key):
-                word_from_string = word_from_string.replace(char_from_key, str(n))
-            v = 0
-            for n, char_from_key in enumerate(reversed(word_from_string)):
-                v += pow(separator, n) * int(char_from_key)
-            try:
-                decoded_str += chr(v - char_offset)
-            except ValueError:
-                pass
-        return decoded_str
-
     if "/" not in link:
         link = "https://kwik.cx/f/" + link
 
@@ -889,142 +728,40 @@ def get_download_link_from_kwik(request, link, idm=False):
         print("Returned url from cache\nurl: {}".format(download_links.get(link)))
         return HttpResponseRedirect(download_links.get(link))
 
-    headers = {
-        'User-Agent': animelist.animepahe_header["User-Agent"],
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'TE': 'Trailers',
-    }
-    cookies = {}
-    try:
-        # ck = pickle.load(open("cookies.pkl", "rb"))
-        ck = json.load(open("cookies.json", "rb"))
-    except FileNotFoundError:
-        print("Cookie not found, getting online one..")
-        # ck = pickle.loads(getfile("cookies.pkl"))
-        ck = json.loads(getfile("cookies.json"))
+    t = animepahe.download_link(link)
+    if 'error' in t:
+        return http404(t['error'], request)
 
-    if check_cookie(ck, link) is False:
-        print("Cookie not valid anymore, getting new..")
-        # browser = webdriver.Firefox(executable_path=r"MoeList\Backbone\geckodriver.exe", timeout=300)
-        # browser.install_addon(path.join(os.getcwd(), r"MoeList\Backbone\Privacy Pass.xpi"), temporary=False)
-        options = webdriver.ChromeOptions()
-        options.add_argument(r"user-data-dir={}".format(path.join(os.getcwd(), r"MoeList\Backbone\chrome_data")))
-        browser = webdriver.Chrome(
-            executable_path=r"MoeList\Backbone\chromedriver.exe",
-            chrome_options=options
-        )
-        browser.get("chrome://version/")
-        animelist.animepahe_header["User-Agent"] = browser.execute_script("return navigator.userAgent;")
-        sleep(2)
-        browser.get(link)
-        WebDriverWait(browser, 3000).until(EC.title_contains("AnimePahe"))
-        # while link == browser.current_url:
-        sleep(1)
-        ck = browser.get_cookies()
-        browser.close()
-        browser.quit()
-        # pickle.dump(ck, open("cookies.pkl", "wb"))
-        json.dump(ck, open("cookies.json", "w"), indent=4)
-        json.dump(animelist.animepahe_header, open(animelist._animepahe_header_file, "w"), indent=4)
-        threading.Thread(target=putfile, daemon=True, kwargs={"filename": "cookies.json"})
+    url = t['link']
+    download_links.add(link, url)
 
-    for cookie in ck:
-        cookies[cookie['name']] = cookie['value']
-
-    session = requests.session()
-    session.headers.update(headers)
-    session.cookies.update(cookies)
-
-    print("Loading First Page...", end="")
-    try:
-        response = session.get(link)
-    except requests.exceptions.ConnectionError:
-        return HttpResponse("Connection Error")
-
-    if response.status_code != 200:
-        print("\tError in cookies")
-        print("Setting New Cookie did Not help!")
-        print(response.status_code)
-        print(response.content.decode())
-        pprint(cookies)
-        raise Exception("Super Duper Error!")
-
-    print("Loaded")
-    pattern = r"String\.fromCharCode\(\_0x\S+?\)}return decodeURIComponent\(escape\(\S+?\)\)\}\(\"(" \
-              r"?P<encoded_string>[a-zA-Z]+?)\",(?P<useless_1>\d+?),\"(?P<key>[a-zA-Z]+?)\",(?P<char_offset>\d+?)," \
-              r"(?P<separator>\d+?),(?P<useless_2>\d+?)\)\)\n  \</script>\n"
-    try:
-        matched = search(pattern, response.content.decode()).groupdict()
-    except AttributeError:
-        print(response.content.decode())
-        print("Error")
-        return HttpResponse("Error")
-
-    decoded_string = decode_encoded_data(
-        encoded_string=matched['encoded_string'],
-        key=matched['key'],
-        char_offset=int(matched['char_offset']),
-        separator=int(matched['separator'])
-    )
-
-    print("Obtaining Token...", end="")
-    pattern = r"\<input type=\"hidden\" name=\"_token\" value=\"(?P<_token>[0-9a-zA-Z]+?)\"\>"
-    data = search(pattern, decoded_string).groupdict()
-    print("Done")
-
-    headers = {
-        'User-Agent': animelist.animepahe_header["User-Agent"],
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'https://kwik.cx',
-        'Connection': 'keep-alive',
-        'Referer': link,
-        'Upgrade-Insecure-Requests': '1',
-    }
-    session.headers.update(headers)
-    print("Loading 2nd page...", end="")
-    response = session.post(link.replace("/f/", "/d/"), data=data, allow_redirects=False)
-    if response.status_code == 302:
-        print("Link found")
-        url = response.headers['location']
-        print(url)
-
-        download_links.add(link, url)
-
-        if idm:
-            idm_path = r"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"
-            if path.exists(idm_path):
-                if 'file' in parse_qs(urlparse(url).query):
-                    filename = r'/f "{}"'.format(parse_qs(urlparse(url).query)['file'][0])
-                    print(f"File Name: {filename}")
-                else:
-                    filename = ""
-                system(r'""{}" /a /n /d "{}" {}"'.format(idm_path, url, filename))
-                system(r'""{}" /s"'.format(idm_path))
+    if idm:
+        idm_path = r"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"
+        if path.exists(idm_path):
+            if 'file' in parse_qs(urlparse(url).query):
+                filename = r'/f "{}"'.format(parse_qs(urlparse(url).query)['file'][0])
+                print(f"File Name: {filename}")
             else:
-                print("Error. IDM does not exists")
+                filename = ""
+            system(r'""{}" /a /n /d "{}" {}"'.format(idm_path, url, filename))
+            system(r'""{}" /s"'.format(idm_path))
         else:
-            pass
-            # threading.Thread(
-            #     target=download_file,
-            #     kwargs={
-            #         'url': url,
-            #         'file_name': parse_qs(urlparse(url).query)['file'][0],
-            #         'number_of_threads': 2
-            #     },
-            #     daemon=True
-            # ).start()
-        if idm:
-            return HttpResponse(f"<p>{url}</p><p>Self Closing</p><script>setTimeout(window.close, 10000)</script>")
-        else:
-            return HttpResponseRedirect(url)
+            print("Error. IDM does not exists")
     else:
-        print("Error. 2nd page did not redirect to download link.")
-        return http404("Error. 2nd page did not redirect to download link.", request)
+        pass
+        # threading.Thread(
+        #     target=download_file,
+        #     kwargs={
+        #         'url': url,
+        #         'file_name': parse_qs(urlparse(url).query)['file'][0],
+        #         'number_of_threads': 2
+        #     },
+        #     daemon=True
+        # ).start()
+    if idm:
+        return HttpResponse(f"<p>{url}</p><p>Self Closing</p><script>setTimeout(window.close, 10000)</script>")
+    else:
+        return HttpResponseRedirect(url)
 
 
 # put file in rajib884.pythonanywhere.com
@@ -1056,7 +793,7 @@ def getfile(filename):
 
 def search_pp(request):
     if "search" in request.GET:
-        sr = animelist.anilist_search(request.GET["search"])
+        sr = anilist.search(request.GET["search"])
         pprint(sr)
         return HttpResponse(
             get_template('MoeList/search_result.html').render({"result": sr, "navbar": variables}, request))

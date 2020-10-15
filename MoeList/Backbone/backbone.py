@@ -13,7 +13,6 @@ from collections import defaultdict
 from json import loads, dumps
 from mimetypes import guess_type
 from os.path import isdir, join, exists, basename, dirname
-from pprint import pprint
 from time import sleep, time
 from typing import Union
 
@@ -28,7 +27,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from slugify import slugify
 
-from MoeList.Backbone.animepahe import update_animepahe
+from MoeList.Backbone import anilist
+from MoeList.Backbone import animepahe
 
 sg.SetGlobalIcon(r"MoeList\static\MoeList\icon.ico")
 sg.theme("DarkBlack")
@@ -56,46 +56,12 @@ def cwebp(input_image, output_image, option):
     return result
 
 
-class AniList:
-    url = 'https://graphql.anilist.co'
-
-    def mal_to_anilist(self, mal: int):
-        def simplify_json(result):
-            return {
-                'id': result['id'],
-                'title': result['title']['romaji'],
-                'titleEn': result['title']['english']
-            }
-
-        query = '''
-            query ($idMal: Int) { 
-                Media (idMal: $idMal, type: ANIME) { 
-                    id
-                    title {
-                        romaji
-                        english
-                    }
-                }
-            }
-            '''
-        variables = {'idMal': mal}
-        print("Searching AniList for Mal id {}".format(mal))
-        anilist_json = requests.post(self.url, json={'query': query, 'variables': variables}).json()
-
-        if "errors" in anilist_json:
-            raise KeyError
-        else:
-            return simplify_json(anilist_json["data"]["Media"])
-
-
 class FileList:
     def __init__(self):
         self.filelist = []
         self._old_filelist = []
         self.data = {}
         self.title_replace = {}
-        self.anilist_url = 'https://graphql.anilist.co'
-        self.animepahe_api_url = 'https://animepahe.com/api'
         self.pc_drive_letters = r"C:\\|D:\\|E:\\|F:\\|G:\\"
         self._changed = False
         if re.match(self.pc_drive_letters, os.getcwd()) is None:
@@ -109,8 +75,6 @@ class FileList:
         self._name_exceptions_file = r"MoeList\data\exceptions.json"
         self._regex_patterns_file = r"MoeList\data\regex_patterns.json"
         self._animepahe_offset_file = r"MoeList\data\animepahe_offset.json"
-        self._animepahe_header_file = r"MoeList\data\animepahe_header.json"
-        self._animepahe_data_file = r"MoeList\data\animepahe_data.bz2"
         # self._load_data_from_encrypt()
         self._load_data_from_files()
 
@@ -118,9 +82,8 @@ class FileList:
         self.exceptions = json.load(open(self._name_exceptions_file))
         self.root_folders = json.load(open(self._root_folders_file))
         self.animepahe_offset = json.load(open(self._animepahe_offset_file))
-        self.animepahe_header = json.load(open(self._animepahe_header_file))
         try:
-            self.check_animepahe_header()
+            animepahe.check_header()
         except requests.exceptions.ConnectionError:
             print("Connection Error")
 
@@ -185,13 +148,15 @@ class FileList:
 
     # todo: Currently Airing List
 
-    def watched(self, anilist_id: str, ep: str) -> bool:
+    def watched(self, anilist_id: str, ep: str, w: bool = True) -> bool:
+        if type(w) != bool:
+            raise ValueError
         if ep in self.data[anilist_id]["episode_list"]:
-            self.data[anilist_id]["episode_list"][ep]["watched"] = True
+            self.data[anilist_id]["episode_list"][ep]["watched"] = w
         else:
             self.data[anilist_id]["episode_list"][ep] = {
                 "path": None,
-                "watched": True
+                "watched": w
             }
         self._changed = True
         return True
@@ -296,25 +261,6 @@ class FileList:
         else:
             return False
 
-    # Mal to anilist id
-    def mal_to_anilist(self, mal: int) -> int:
-        query = '''
-            query ($idMal: Int) { 
-                Media (idMal: $idMal, type: ANIME) { 
-                    id
-                }
-            }
-            '''
-        variables = {'idMal': mal}
-        print(f"Searching AniList id with mal {mal}.. ", end="")
-        anilist_json = requests.post(self.anilist_url, json={'query': query, 'variables': variables}).json()
-
-        if "errors" in anilist_json:
-            raise KeyError
-        else:
-            print("Found {}".format(anilist_json["data"]["Media"]["id"]))
-            return anilist_json["data"]["Media"]["id"]
-
     # import mal
     def import_mal(self, f):
         self.to_print.append("Importing Myanimelist")
@@ -331,7 +277,7 @@ class FileList:
                     print(f"Importing {anime['series_title']}")
                     self.to_print.append(f"Importing {anime['series_title']}")
                     try:
-                        key = self.mal_to_anilist(int(anime['series_animedb_id']))
+                        key = anilist.mal_to_anilist(int(anime['series_animedb_id']))
                         self.to_print.append(f"\tMAL id {anime['series_animedb_id']} is AniList id {key}")
                     except KeyError:
                         print("KeyError")
@@ -353,169 +299,6 @@ class FileList:
                         self.to_print.append(f"\tDatabase updated")
         self.to_print.append(f"===Importing Finished===")
 
-    # Anilist search by name
-    def anilist_search(self, name: str, only_airing: bool = False, max_in_1_page: int = 10) -> list:
-        def simplify_search_json(search_result):
-            temp = []
-            for result in search_result:
-                temp.append({
-                    'id': result['id'],
-                    'mal': result['idMal'],
-                    'thumb': result['coverImage']['medium'],
-                    'episodes': result['episodes'],
-                    'format': result['format'],
-                    'season': result['season'],
-                    'year': result['startDate']['year'],
-                    'status': result['status'],
-                    'title': result['title']['romaji'],
-                    'titleEn': result['title']['english']
-                })
-            return temp
-
-        query = '''
-            query ($id: Int, $page: Int, $perPage: Int, $search: String, $status: MediaStatus) {
-                Page (page: $page, perPage: $perPage) {
-                    media (id: $id, search: $search, type: ANIME, status: $status) {
-                        id
-                        idMal
-                        format
-                        season
-                        status
-                        episodes
-                        startDate {
-                            year
-                        }
-                        title {
-                            romaji
-                            english
-                        }
-                        coverImage{
-                            medium
-                        }
-                    }
-                }
-            }
-            '''
-
-        variables = {
-            'search': name,
-            'page': 1,
-            'perPage': max_in_1_page
-        }
-
-        if only_airing:
-            variables['status'] = 'RELEASING'
-        print("Searching AniList for {}".format(name))
-        anilist_json = requests.post(self.anilist_url, json={'query': query, 'variables': variables}).json()
-
-        if "errors" in anilist_json:
-            raise KeyError
-        else:
-            return simplify_search_json(anilist_json["data"]["Page"]["media"])
-
-    # Anilist get info by id
-    def anilist_get_info(self, anilist_id: int) -> dict:
-        def simplify_edges(nodes):
-            y = []
-            for node in nodes:
-                if node['node']['format'] not in ['MANGA', 'MUSIC', 'NOVEL', 'ONE_SHOT']:
-                    y.append({
-                        'id': node['node']['id'],
-                        'type': node['node']['format'],
-                        'title': node['node']['title']['romaji'],
-                        'season': node['node']['season'],
-                        'episodes': node['node']['episodes'],
-                        'status': node['node']['status'],
-                        'banner': node['node']['bannerImage'],
-                        'cover': node['node']['coverImage']['extraLarge'],
-                        'year': node['node']['startDate']['year'],
-                        'relationType': node['relationType']
-                    })
-            return y
-
-        def simplify_anilist_json(anilist_info_json):
-            temp = {
-                'banner': anilist_info_json['bannerImage'],
-                'cover': anilist_info_json['coverImage']['extraLarge'],
-                'description': anilist_info_json['description'],
-                'episodes': anilist_info_json['episodes'],
-                'type': anilist_info_json['format'],
-                'genres': anilist_info_json['genres'],
-                'mal': anilist_info_json['idMal'],
-                'nextEp': anilist_info_json['nextAiringEpisode'],
-                'relations': simplify_edges(anilist_info_json['relations']['edges']),
-                'season': anilist_info_json['season'],
-                'year': anilist_info_json['startDate']['year'],
-                'status': anilist_info_json['status'],
-                'title': anilist_info_json['title']['romaji'],
-                'titleEn': anilist_info_json['title']['english'],
-                'titleJp': anilist_info_json['title']['native'],
-                'episode_list': {}
-            }
-            return temp
-
-        query = '''
-            query ($id: Int) {
-              Media (id: $id, type: ANIME) {
-                idMal
-                episodes
-                format
-                season
-                startDate {
-                    year
-                }
-                status
-                genres
-                description(asHtml: false)
-                bannerImage
-                nextAiringEpisode {
-                    airingAt
-                    episode
-                }
-                relations {
-                    edges {
-                        node {
-                            id
-                            title{
-                                romaji
-                            }
-                            episodes
-                            format
-                            status
-                            season
-                            bannerImage
-                            coverImage{
-                                extraLarge
-                            }
-                            startDate {
-                                year
-                            }
-                        }
-                        relationType
-                    }
-                }
-                coverImage{
-                    extraLarge
-                }
-                title {
-                  romaji
-                  english
-                  native
-                }
-              }
-            }
-            '''
-
-        variables = {'id': anilist_id}
-
-        anilist_json = requests.post(self.anilist_url, json={'query': query, 'variables': variables}).json()
-
-        if "errors" in anilist_json:
-            pprint(anilist_json)
-            raise KeyError
-        else:
-            return simplify_anilist_json(anilist_json["data"]["Media"])
-
     # Update data in anilist id
     def update_anilist_data(self, anilist_id: Union[str, int]) -> bool:
         keep = ["episode_list", "animepahe_id", "downloadableEp", "slug"]
@@ -523,7 +306,7 @@ class FileList:
             self.data[str(anilist_id)] = {}
         anime = self.data[str(anilist_id)]
         try:
-            latest_info = self.anilist_get_info(int(anilist_id))
+            latest_info = anilist.info(int(anilist_id))
         except requests.exceptions.ConnectionError:
             print("Connection Error, Failed to update {} data".format(anime['title']))
             return False
@@ -535,7 +318,7 @@ class FileList:
                 anime[key] = value
 
         if anime.get("animepahe_id") is None:
-            anime["animepahe_id"] = self.mal_to_animepahe(anime["mal"])
+            anime["animepahe_id"] = animepahe.mal_to_animepahe(anime["mal"])
         if anime.get("slug") is None:
             anime["slug"] = slugify(anime["title"])
         if anime.get("episode_list") is None:
@@ -663,7 +446,7 @@ class FileList:
                 key = self.get_key(name)
                 if key is None:
                     print("New Anime: {}".format(name))
-                    search_result = self.anilist_search(name, max_in_1_page=8)
+                    search_result = anilist.search(name, max_in_1_page=8)
                     for value in search_result:
                         if name == value["title"] or name == value["titleEn"]:
                             key = str(value["id"])
@@ -694,8 +477,8 @@ class FileList:
                         else:
                             # Totally new anime
                             self.update_anilist_data(key)
-                            # self.data[key] = self.anilist_get_info(int(key))
-                            # self.data[key]["animepahe_id"] = self.mal_to_animepahe(self.data[key]["mal"])
+                            # self.data[key] = anilist.info(int(key))
+                            # self.data[key]["animepahe_id"] = animepahe.mal_to_animepahe(self.data[key]["mal"])
                             # self.data[key]["slug"] = slugify(self.data[key]["title"])
                             for ep in eps:
                                 self.data[key]["episode_list"][ep] = {
@@ -817,7 +600,7 @@ class FileList:
             # Check for animepahe id/data
             if "animepahe_id" not in self.data[key]:
                 # animepahe_id = self.search_animepahe_id(self.data[key]["title"])
-                self.data[key]["animepahe_id"] = self.mal_to_animepahe(self.data[key]["mal"])
+                self.data[key]["animepahe_id"] = animepahe.mal_to_animepahe(self.data[key]["mal"])
                 self._changed = True
         if self._changed:
             self.save_data()
@@ -868,39 +651,6 @@ class FileList:
                         if len(ep["watchedPart"]) > 80:
                             self.watched(anilist_id, ep_no)
                             print(f"Watched {anime['title']} ep {ep_no} more than 80%")
-
-    def check_animepahe_header(self):
-        print("Checking Animepahe header..", end="")
-        response = requests.get("https://animepahe.com", headers=self.animepahe_header)
-        if response.status_code != 200:
-            print("Failed")
-            # browser = webdriver.Firefox(executable_path=r"MoeList\Backbone\geckodriver.exe", timeout=300)
-            options = webdriver.ChromeOptions()
-            options.add_argument(r"user-data-dir={}".format(join(os.getcwd(), r"MoeList\Backbone\chrome_data")))
-            browser = webdriver.Chrome(
-                executable_path=r"MoeList\Backbone\chromedriver.exe",
-                chrome_options=options
-            )
-            browser.get("https://animepahe.com")
-            cf_clearance = None
-            WebDriverWait(browser, 3000).until(EC.title_contains("animepahe"))
-            # while cf_clearance is None:
-            sleep(1)
-            p = browser.get_cookies()
-            for cookie in p:
-                if cookie['name'] == 'cf_clearance':
-                    cf_clearance = cookie['value']
-                    break
-            self.animepahe_header = {
-                "User-Agent": browser.execute_script("return navigator.userAgent;"),
-                "cookie": "cf_clearance={}".format(cf_clearance or "null")
-            }
-            browser.close()
-            browser.quit()
-            json.dump(self.animepahe_header, open(self._animepahe_header_file, "w"), indent=4)
-            print(f"cf_clearance: {cf_clearance}")
-        else:
-            print("OK")
 
     def move_files(self):
         if not self._running_on_pc:
@@ -965,7 +715,7 @@ class FileList:
             self._thread_running = True
             sleep(1.3)
             print("Background Thread Started")
-            update_animepahe()
+            animepahe.update_animepahe()
             while True:
                 try:
                     self.recheck()
@@ -1465,18 +1215,6 @@ class FileList:
                 ) else r"MoeList\thumbnails\{} ep {}.jpeg".format(anime['slug'], ep)
             })
         return eps
-
-    def mal_to_animepahe(self, mal: Union[str, int]) -> Union[int, None]:
-        mal = int(mal)
-        print(f"Searching for Animepahe id with MAL {mal}.. ", end="")
-        with open(self._animepahe_data_file, "rb") as f:
-            animepahe_data = json.loads(bz2.decompress(f.read()))
-        for name, ids in animepahe_data.items():
-            if ids["MyAnimeList"] == mal:
-                print(f"Found {ids['Animepahe']}")
-                return ids["Animepahe"]
-        print("Not Found")
-        return None
 
     # remove it?
     # def search_animepahe_id(self, query):

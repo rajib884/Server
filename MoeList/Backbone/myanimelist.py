@@ -37,7 +37,7 @@ class MAL:
         # print(self.get_score(21))
         # print(self.get_score(38935))
         # print(self.get_score(389350))
-        # pprint(self.currnet_user_anime_list())
+        # pprint(self.current_user_anime_list())
         # self.update_user_list(41006)
         # pprint(self.seasonal_anime())
         # pprint(self.user_data())
@@ -55,7 +55,7 @@ class MAL:
                 self.data['refresh_token'] = t['refresh_token']
                 self.data['token_type'] = t['token_type']
                 with open(self._data_file, "w") as f:
-                    f.write(json.dumps(self._data_file, indent=4, sort_keys=True))
+                    f.write(json.dumps(self.data, indent=4, sort_keys=True))
                 return True
 
     def process_code(self, code, redirect_uri):
@@ -128,7 +128,7 @@ class MAL:
         params = {'fields': 'anime_statistics'}
         return self.get('https://api.myanimelist.net/v2/users/@me', params)
 
-    def currnet_user_anime_list(self, user_name='@me', status=None, sort='anime_title', limit=10,
+    def current_user_anime_list(self, user_name='@me', status=None, sort='anime_title', limit=10,
                                 offset=0):  # todo: status, sort not used!
         if status not in ('watching', 'completed', 'on_hold', 'dropped', 'plan_to_watch', None):
             print(f"Error: {status} is not valid status")
@@ -143,7 +143,7 @@ class MAL:
         }
         response = self.get(f'https://api.myanimelist.net/v2/users/{user_name}/animelist', params)
         if limit > 1000 and 'next' in response['paging']:
-            t = self.currnet_user_anime_list(user_name, status, sort, limit - 1000, offset + 1000)
+            t = self.current_user_anime_list(user_name, status, sort, limit - 1000, offset + 1000)
             response['data'].extend(t['data'])
             response['paging']['next'] = t['paging']['next']
         return response
