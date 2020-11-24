@@ -317,12 +317,12 @@ class FileList:
                         self.remove_image(anime.get("slug", slugify(latest_info['title'])), key)
                 anime[key] = value
 
-        if anime.get("animepahe_id") is None:
-            anime["animepahe_id"] = animepahe.mal_to_animepahe(anime["mal"])
         if anime.get("slug") is None:
             anime["slug"] = slugify(anime["title"])
         if anime.get("episode_list") is None:
             anime["episode_list"] = {}
+        if anime.get("animepahe_id") is None:
+            anime["animepahe_id"] = animepahe.mal_to_animepahe(anime["mal"])
         self._changed = True
         return True
 
@@ -446,21 +446,25 @@ class FileList:
                 key = self.get_key(name)
                 if key is None:
                     print("New Anime: {}".format(name))
-                    search_result = anilist.search(name, max_in_1_page=8)
-                    for value in search_result:
-                        if name == value["title"] or name == value["titleEn"]:
-                            key = str(value["id"])
-                            self.add_new_title_replace(name, value["title"])
-                            print("\tAuto Match found")
-                            break
-                    if key is None:
-                        key = self.anilist_search_dialog(name, file, search_result)
-                        if key is not None:
-                            for value in search_result:
-                                if key == value['id']:
-                                    self.add_new_title_replace(name, value["title"])
-                                    key = str(key)
-                                    break
+                    mal_id = animepahe.mal_from_name(name)
+                    if mal_id is not None:
+                        key = str(anilist.mal_to_anilist(mal_id)['id'])
+                    else:
+                        search_result = anilist.search(name, max_in_1_page=8)
+                        for value in search_result:
+                            if name == value["title"] or name == value["titleEn"]:
+                                key = str(value["id"])
+                                self.add_new_title_replace(name, value["title"])
+                                print("\tAuto Match found")
+                                break
+                        if key is None:
+                            key = self.anilist_search_dialog(name, file, search_result)
+                            if key is not None:
+                                for value in search_result:
+                                    if key == value['id']:
+                                        self.add_new_title_replace(name, value["title"])
+                                        key = str(key)
+                                        break
 
                     if key is not None:
                         # key found
