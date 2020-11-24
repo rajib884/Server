@@ -2,6 +2,7 @@ import bz2
 import json
 import os
 import re
+from base64 import b64decode
 from json import JSONDecodeError
 from os import path
 from os.path import join
@@ -105,6 +106,8 @@ def check_header():
 
 
 def mal_to_animepahe(mal: Union[str, int]) -> Union[int, None]:
+    if mal is None:
+        return None
     mal = int(mal)
     print(f"Searching for Animepahe id with MAL {mal}.. ", end="")
     with open(file, "rb") as f:
@@ -113,6 +116,18 @@ def mal_to_animepahe(mal: Union[str, int]) -> Union[int, None]:
         if ids["MyAnimeList"] == mal:
             print(f"Found {ids['Animepahe']}")
             return ids["Animepahe"]
+    print("Not Found")
+    return None
+
+
+def mal_from_name(search: str) -> Union[None, int]:
+    print(f"Searching for mal id with animepahe name {search}, ", end="")
+    with open(file, "rb") as f:
+        data = json.loads(bz2.decompress(f.read()))
+    for name, ids in data.items():
+        if name == search:
+            print(f"Found {ids['Animepahe']}")
+            return ids["MyAnimeList"]
     print("Not Found")
     return None
 
@@ -224,6 +239,34 @@ def download_link(kwik_link):
         return {'error': "Error. 2nd page did not redirect to download link."}
 
 
+def unshorten(link):
+    code = requests.get(link).content.split(b"ysmm = '")[1].split(b"';")[0].decode()
+    zeros, ones = '', ''
+    for num, letter in enumerate(code):
+        if num % 2 == 0:
+            zeros += code[num]
+        else:
+            ones = code[num] + ones
+    key = zeros + ones
+
+    t1 = None
+    for num, letter in enumerate(key):
+        try:
+            int(letter)
+        except ValueError:
+            pass
+        else:
+            if t1 is None:
+                t1 = num
+            else:
+                t2 = int(key[t1]) ^ int(letter)
+                if t2 < 10:
+                    key = key[:t1] + str(t2) + key[t1 + 1:]
+                t1 = None
+    key = b64decode(key.encode("utf-8"))
+    return key[16:-16].decode()
+
+
 def get_kwik_link(anime_data, session, anilist_id, ep):
     # todo: use these arguments!
     # anilist_id = str(int(anilist_id))
@@ -257,7 +300,8 @@ def get_kwik_link(anime_data, session, anilist_id, ep):
                 "HQ" if info['hq'] else "",
                 info["audio"].title()
             )
-            temp[title] = anime_data[quality]['kwik'].replace("https://kwik.cx/e/", "/MoeList/kwikDownload/")
+            # temp[title] = anime_data[quality]['kwik'].replace("https://kwik.cx/e/", "/MoeList/kwikDownload/")
+            temp[title] = unshorten(anime_data[quality]['kwik_adfly']).replace("https://kwik.cx/f/", "/MoeList/kwikDownload/")
 
     pprint(temp)
     return temp
